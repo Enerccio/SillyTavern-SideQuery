@@ -1,12 +1,37 @@
-<div id="enerccio_sidequery_prompt" class="drawer-content flexGap5">
-    <div id="enerccio_sidequery_prompt_content" name="floatingPromptHolder" class="scrollY">
+<div id="enerccio_sideprompt_prompt" class="drawer-content flexGap5">
+    <div id="enerccio_sideprompt_prompt_content" name="floatingPromptHolder">
         <div class="inline-drawer">
             <div id="ANBlockToggle" class="inline-drawer-toggle inline-drawer-header">
                 <b>Side Query</b>
                 <div class="inline-drawer-icon fa-solid interactable up fa-circle-chevron-up" tabindex="0" role="button"></div>
             </div>
-            <div class="inline-drawer-content" style="display: block;">
+            <div class="inline-drawer-content enerccio_sideprompt_prompt_body">
+                <div id="enerccio_sideprompt_prompt_response" class="enerccio_sideprompt_response"></div>
 
+                <div class="enerccio_sideprompt_controls">
+                    <div class="enerccio_sideprompt_checkbox_group">
+                        <div class="enerccio_sideprompt_checkbox">
+                            <label for="enerccio_sideprompt_include_persona">Include persona</label><input id="enerccio_sideprompt_include_persona" type="checkbox"/>
+                        </div>
+                        <div class="enerccio_sideprompt_checkbox">
+                            <label for="enerccio_sideprompt_include_characters">Include characters</label><input id="enerccio_sideprompt_include_characters" type="checkbox">
+                        </div>
+                        <div class="enerccio_sideprompt_checkbox">
+                            <label for="enerccio_sideprompt_include_worldinfo">Include worldinfo</label><input id="enerccio_sideprompt_include_worldinfo" type="checkbox">
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <label for="enerccio_sideprompt_user_input">Query:</label>
+                    <textarea id="enerccio_sideprompt_user_input" placeholder="Enter your query here" rows="4"></textarea>
+
+                    <div id="enerccio_sideprompt_button_row" class="enerccio_sideprompt_button_row">
+                        <button id="enerccio_sideprompt_undo" class="menu_button interactable" type="button">UNDO</button>
+                        <button id="enerccio_sideprompt_send" class="menu_button interactable" type="button">SEND</button>
+                        <button id="enerccio_sideprompt_generate_again" class="menu_button interactable" type="button">GENERATE AGAIN</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

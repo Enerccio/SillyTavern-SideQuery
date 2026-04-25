@@ -5,8 +5,8 @@
     z-index: 9999;
 }
 
-#enerccio_sidequery_prompt {
-    overflow-y: auto;
+#enerccio_sideprompt_prompt {
+    overflow: hidden;
     max-width: 90dvw;
     max-height: 90dvh;
     min-width: 100px;
@@ -15,7 +15,6 @@
     border: 1px solid var(--SmartThemeBorderColor);
     position: fixed;
     padding: 10px;
-    padding-top: 10px;
     padding-top: 25px;
     display: none;
     flex-direction: column;
@@ -26,5 +25,127 @@
     margin: 0;
     right: unset;
     width: calc(((100dvw - var(--sheldWidth)) / 2) - 1px);
-    height: unset;
+    height: min(90dvh, 720px);
+}
+
+#enerccio_sideprompt_prompt_content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#enerccio_sideprompt_prompt_content > .inline-drawer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.enerccio_sideprompt_prompt_body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.enerccio_sideprompt_response {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.enerccio_sideprompt_controls {
+    flex: 0 0 auto;
+    padding-top: 10px;
+    display: block;
+}
+
+.enerccio_sideprompt_checkbox_group {
+    display: flex;
+    gap: 1em;
+    flex-wrap: wrap;
+}
+
+.enerccio_sideprompt_checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.enerccio_sideprompt_button_row {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.enerccio_sideprompt_button_row button {
+    flex: 1;
+}
+
+.enerccio_sideprompt_response {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.enerccio_sideprompt_message {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px;
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background-color: var(--SmartThemeBlurTintColor);
+}
+
+.enerccio_sideprompt_message_header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.enerccio_sideprompt_message_sender {
+    font-weight: 600;
+    grid-column: 1;
+}
+
+.enerccio_sideprompt_message_left .enerccio_sideprompt_message_sender {
+    justify-self: start;
+    text-align: left;
+}
+
+.enerccio_sideprompt_message_right .enerccio_sideprompt_message_sender {
+    justify-self: end;
+    text-align: right;
+}
+
+
+.enerccio_sideprompt_message_copy {
+    grid-column: 2;
+    justify-self: end;
+}
+
+.enerccio_sideprompt_message_content {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    background-color: var(--black30a);
+}
+
+.enerccio_sideprompt_message_left .enerccio_sideprompt_message_content {
+    border-left-color: color-mix(in srgb, #7fb3e8 70%, var(--SmartThemeBorderColor));
+    background-color: color-mix(in srgb, var(--SmartThemeUserMesBlurTintColor) 75%, #1f4f78 25%);
+}
+
+.enerccio_sideprompt_message_right .enerccio_sideprompt_message_content {
+    border-left-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 70%, var(--SmartThemeBorderColor));
+    background-color: color-mix(in srgb, var(--SmartThemeBotMesBlurTintColor) 75%, #4a341d 25%);
 }
