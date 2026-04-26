@@ -435,6 +435,7 @@ class SidePrompt {
     async generateReply() {
         context.deactivateSendButtons();
         this.generatingActive = true;
+        await this.updateButtonStates();
 
         const metadata = initializeRequestMetadata();
         this.abort = new AbortController();
@@ -445,7 +446,6 @@ class SidePrompt {
         this.asyncGenerator = asyncGeneratorFunction();
         let text = "";
         try {
-            await this.updateButtonStates();
             while (true) {
                 let r = await this.asyncGenerator.next();
                 if (r.done) {
