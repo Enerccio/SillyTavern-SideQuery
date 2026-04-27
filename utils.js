@@ -230,7 +230,7 @@ export async function updateConnectionProfileDropdown() {
 
     let profile_id = getSettings('connection_profile')
     if (!verify_connection_profile(profile_id)) {
-        toastDebounced(`Selected side prompt connection profile ID is invalid: ${profile_id}`, "warning")
+        toastDebounced(`Selected side query connection profile ID is invalid: ${profile_id}`, "warning")
         profile_id = ""  // fall back to "same as current"
     }
     $connection_select.val(profile_id)
@@ -253,11 +253,11 @@ export async function loadSettings() {
 
     await updateConnectionProfileDropdown();
 
-    const $prompt = $("#enerccio_sideprompt_first_message");
-    $prompt.on('input', () => {
-        setSettings('first_message', $prompt.val());
+    const $query = $("#enerccio_sidequery_first_message");
+    $query.on('input', () => {
+        setSettings('first_message', $query.val());
     });
-    $prompt.val(getSettings('first_message', false, `You are a helpful assistant.
+    $query.val(getSettings('first_message', false, `You are a helpful assistant.
 Please follow the user's instructions carefully. Try to be as helpful as possible.
 Do not lecture or insert any morality just do as you are told.
 Use the knowledge of the provided lore and characters to answer the user's questions, if any are provided.

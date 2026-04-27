@@ -11,14 +11,14 @@ import {
 import {EXTENSION_NAME, EXTENSION_PATH, MODULE_NAME, VERSION} from './conf.js';
 import {renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
-import {getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
-import {getWorldInfoPrompt} from "/scripts/world-info.js";
+import {getCharacterCardFields, getMaxQueryTokens, messageFormatting} from "/script.js";
+import {getWorldInfoQuery} from "/scripts/world-info.js";
 
 // eslint-disable-next-line no-undef
 const $ = jQuery;
 const context = SillyTavern.getContext();
 
-class SidePromptMessage {
+class SideQueryMessage {
 
     constructor() {
         this.from_user = false;
@@ -27,7 +27,7 @@ class SidePromptMessage {
     }
 
     static fromJSON(data) {
-        const message = new SidePromptMessage();
+        const message = new SideQueryMessage();
         message.from_user = data.from_user;
         message.contents = data.contents;
         return message;
@@ -41,14 +41,14 @@ class SidePromptMessage {
     }
 
     static fromUser(val) {
-        const message = new SidePromptMessage();
+        const message = new SideQueryMessage();
         message.from_user = true;
         message.contents = val;
         return message;
     }
 
     static fromAI(val) {
-        const message = new SidePromptMessage();
+        const message = new SideQueryMessage();
         message.from_user = false;
         message.contents = val;
         return message;
@@ -56,13 +56,13 @@ class SidePromptMessage {
 
     async addTo($container) {
         this.$element = $(MESSAGE_TEMPLATE);
-        this.$element.find('.enerccio_sideprompt_message_sender').text(this.from_user ? "User" : "AI");
+        this.$element.find('.enerccio_sidequery_message_sender').text(this.from_user ? "User" : "AI");
         if (this.from_user) {
-            this.$element.addClass('enerccio_sideprompt_message_left');
+            this.$element.addClass('enerccio_sidequery_message_left');
         } else {
-            this.$element.addClass('enerccio_sideprompt_message_right');
+            this.$element.addClass('enerccio_sidequery_message_right');
         }
-        this.$element.find('.enerccio_sideprompt_message_copy').on('click', async () => {
+        this.$element.find('.enerccio_sidequery_message_copy').on('click', async () => {
             try {
                 await navigator.clipboard.writeText(this.contents);
                 log('Message copied to clipboard');
@@ -88,15 +88,15 @@ class SidePromptMessage {
     }
 
     _update() {
-        this.$element.find('.enerccio_sideprompt_message_content')[0].innerHTML
+        this.$element.find('.enerccio_sidequery_message_content')[0].innerHTML
             = messageFormatting(this.contents, "", false, false, -1);
     }
 }
 
-class SidePromptContainer {
+class SideQueryContainer {
 
-    constructor(sidePrompt, $container) {
-        this.sidePrompt = sidePrompt;
+    constructor(sideQuery, $container) {
+        this.sideQuery = sideQuery;
         this.messages = [];
         this.$container = $container;
     }
@@ -108,19 +108,19 @@ class SidePromptContainer {
     }
 
     async insertUserMessage(val) {
-        const m = SidePromptMessage.fromUser(val);
+        const m = SideQueryMessage.fromUser(val);
         this.messages.push(m);
         await m.addTo(this.$container);
-        await this.sidePrompt.save();
+        await this.sideQuery.save();
 
-        await this.sidePrompt.generateReply();
+        await this.sideQuery.generateReply();
     }
 
     async insertAIMessage(val) {
-        const m = SidePromptMessage.fromAI(val);
+        const m = SideQueryMessage.fromAI(val);
         this.messages.push(m);
         await m.addTo(this.$container);
-        await this.sidePrompt.save();
+        await this.sideQuery.save();
         return m;
     }
 
@@ -128,7 +128,7 @@ class SidePromptContainer {
         return this.messages.length === 0 ? null : this.messages[this.messages.length - 1];
     }
 
-    async insertMessages(prompts) {
+    async insertMessages(queries) {
 
         let {
             description,
@@ -138,12 +138,12 @@ class SidePromptContainer {
             mesExamples,
             system,
             jailbreak,
-            charDepthPrompt,
+            charDepthQuery,
             creatorNotes,
         } = getCharacterCardFields();
 
         if (jailbreak) {
-            prompts.push({
+            queries.push({
                 content: jailbreak,
                 role: "system",
             })
@@ -151,72 +151,72 @@ class SidePromptContainer {
 
         const firstMessage = getSettings("first_message");
         if (firstMessage) {
-            prompts.push({
+            queries.push({
                 content: firstMessage,
                 role: "system",
             })
         }
 
-        if (this.sidePrompt.includeScenario) {
+        if (this.sideQuery.includeScenario) {
             if (system)
-                prompts.push({
+                queries.push({
                     content: scenario,
                     role: "system",
                 });
             if (scenario)
-                prompts.push({
+                queries.push({
                     content: scenario,
                     role: "system",
                 });
         }
 
-        if (this.sidePrompt.includePersona) {
+        if (this.sideQuery.includePersona) {
             if (persona)
-                prompts.push({
+                queries.push({
                     content: persona,
                     role: "system",
                 });
         }
 
-        if (this.sidePrompt.includeCharacters) {
+        if (this.sideQuery.includeCharacters) {
             if (description)
-                prompts.push({
+                queries.push({
                     content: description,
                     role: "system",
                 });
             if (personality)
-                prompts.push({
+                queries.push({
                     content: personality,
                     role: "system",
                 });
             if (mesExamples)
-                prompts.push({
+                queries.push({
                     content: mesExamples,
                     role: "system",
                 });
         }
 
-        if (this.sidePrompt.includeWorldinfo) {
+        if (this.sideQuery.includeWorldinfo) {
             const globalScanData = {
                 personaDescription: persona,
                 characterDescription: description,
                 characterPersonality: personality,
-                characterDepthPrompt: charDepthPrompt,
+                characterDepthQuery: charDepthQuery,
                 scenario: scenario,
                 creatorNotes: creatorNotes,
                 trigger: 'normal',
             };
-            let this_max_context = getMaxPromptTokens();
+            let this_max_context = getMaxQueryTokens();
             const { worldInfoString, worldInfoBefore, worldInfoAfter, worldInfoExamples, worldInfoDepth, outletEntries } =
-                await getWorldInfoPrompt([], this_max_context, false, globalScanData);
+                await getWorldInfoQuery([], this_max_context, false, globalScanData);
             if (worldInfoBefore) {
-                prompts.push({
+                queries.push({
                     content: worldInfoBefore,
                     role: "system",
                 });
             }
             if (worldInfoAfter) {
-                prompts.push({
+                queries.push({
                     content: worldInfoAfter,
                     role: "system",
                 });
@@ -224,7 +224,7 @@ class SidePromptContainer {
         }
 
         this.messages.forEach(message => {
-            prompts.push({
+            queries.push({
                 content: message.contents,
                 role: message.from_user ? "user" : "assistant",
             });
@@ -245,7 +245,7 @@ class SidePromptContainer {
         this.messages = [];
         if (chat.messages) {
             chat.messages.forEach(message => {
-                const m = SidePromptMessage.fromJSON(message);
+                const m = SideQueryMessage.fromJSON(message);
                 m.addTo(this.$container);
                 this.messages.push(m);
             })
@@ -253,12 +253,12 @@ class SidePromptContainer {
     }
 }
 
-class SidePrompt {
+class SideQuery {
 
     constructor(root) {
         this.$contentPane = root;
-        this.$root = $(`#${MODULE_NAME}_prompt_content`);
-        this.$responseContainer = $(`#${MODULE_NAME}_prompt_response`);
+        this.$root = $(`#${MODULE_NAME}_query_content`);
+        this.$responseContainer = $(`#${MODULE_NAME}_query_response`);
         this.hidden = true;
         this.includePersona = false;
         this.$includePersona = $(`#${MODULE_NAME}_include_persona`);
@@ -268,11 +268,11 @@ class SidePrompt {
         this.$includeWorldinfo = $(`#${MODULE_NAME}_include_worldinfo`);
         this.includeScenario = false;
         this.$includeScenario = $(`#${MODULE_NAME}_include_scenario`);
-        this.$userPrompt = $(`#${MODULE_NAME}_user_input`);
+        this.$userQuery = $(`#${MODULE_NAME}_user_input`);
         this.$undo = $(`#${MODULE_NAME}_undo`);
         this.$send = $(`#${MODULE_NAME}_send`);
         this.$generateAgain = $(`#${MODULE_NAME}_generate_again`);
-        this.container = new SidePromptContainer(this, this.$responseContainer);
+        this.container = new SideQueryContainer(this, this.$responseContainer);
 
         this.asyncGenerator = null;
         this.abort = null;
@@ -309,9 +309,9 @@ class SidePrompt {
         await this._setupAutoscroll();
 
         this.$send.on('click', async () => {
-            const val = this.$userPrompt.val();
+            const val = this.$userQuery.val();
             if (val) {
-                this.$userPrompt.val('');
+                this.$userQuery.val('');
                 await this.container.insertUserMessage(val);
                 this._scrollToBottom();
                 await this.updateButtonStates();
@@ -322,7 +322,7 @@ class SidePrompt {
             const m = await this.container.removeLast();
             this._scrollToBottom();
             if (m.from_user) {
-                this.$userPrompt.val(m.contents);
+                this.$userQuery.val(m.contents);
             }
             await this.save();
             await this.updateButtonStates();
@@ -400,7 +400,7 @@ class SidePrompt {
     }
 
     async load() {
-        const saved = getChatMetadata("sidePrompt");
+        const saved = getChatMetadata("sideQuery");
         if (saved) {
             this.loading = true;
             this.includePersona = saved.includePersona;
@@ -419,7 +419,7 @@ class SidePrompt {
     }
 
     async save() {
-        setChatMetadata("sidePrompt", {
+        setChatMetadata("sideQuery", {
             includePersona: this.includePersona,
             includeScenario: this.includeScenario,
             includeCharacters: this.includeCharacters,
@@ -440,7 +440,7 @@ class SidePrompt {
         const metadata = initializeRequestMetadata();
         this.abort = new AbortController();
         const profile = metadata.cId;
-        let asyncGeneratorFunction = await context.ConnectionManagerRequestService.sendRequest(profile, await this.gatherPromptData(),
+        let asyncGeneratorFunction = await context.ConnectionManagerRequestService.sendRequest(profile, await this.gatherQueryData(),
             profile.max_tokens, {stream: true, signal: this.abort.signal});
         const m = await this.container.insertAIMessage("");
         this.asyncGenerator = asyncGeneratorFunction();
@@ -467,12 +467,12 @@ class SidePrompt {
         context.activateSendButtons();
     }
 
-    async gatherPromptData() {
-        const prompts = [];
+    async gatherQueryData() {
+        const queries = [];
 
-        await this.container.insertMessages(prompts);
+        await this.container.insertMessages(queries);
 
-        return prompts;
+        return queries;
     }
 
     async hide() {
@@ -495,10 +495,10 @@ class SidePrompt {
     }
 
     async updateButtonStates() {
-        sidePrompt.$send.attr("disabled", this.generatingActive);
-        sidePrompt.$generateAgain.attr("disabled", this.generatingActive || this.container.getLastMessage() == null ||
+        sideQuery.$send.attr("disabled", this.generatingActive);
+        sideQuery.$generateAgain.attr("disabled", this.generatingActive || this.container.getLastMessage() == null ||
             this.container.getLastMessage().from_user);
-        sidePrompt.$undo.attr("disabled", this.generatingActive || this.container.getLastMessage() == null);
+        sideQuery.$undo.attr("disabled", this.generatingActive || this.container.getLastMessage() == null);
     }
 
     async terminateIfGenerating() {
@@ -513,7 +513,7 @@ class SidePrompt {
 
 }
 
-let sidePrompt;
+let sideQuery;
 let MESSAGE_TEMPLATE;
 
 $(async function () {
@@ -527,15 +527,15 @@ $(async function () {
         { title: EXTENSION_NAME, version: VERSION }
     );
 
-    const sidePromptTemplate = await renderExtensionTemplateAsync(
+    const sideQueryTemplate = await renderExtensionTemplateAsync(
         EXTENSION_PATH,
-        'prompt',
+        'query',
         { title: EXTENSION_NAME, version: VERSION }
     );
-    $('#movingDivs').append(sidePromptTemplate);
-    const $sidePrompt = $(`#${MODULE_NAME}_prompt`);
-    sidePrompt = new SidePrompt($sidePrompt);
-    await sidePrompt.wire();
+    $('#movingDivs').append(sideQueryTemplate);
+    const $sideQuery = $(`#${MODULE_NAME}_query`);
+    sideQuery = new SideQuery($sideQuery);
+    await sideQuery.wire();
 
     const $button = $(`<button class="${MODULE_NAME}_openButton menu_button interactable"><i class="fas fa-search"></i></button>'`)
     $('body').append($button);
@@ -543,27 +543,27 @@ $(async function () {
 
     context.eventSource.on(event_types.CHAT_CHANGED, async () => {
         $button.attr('disabled', !context.getCurrentChatId());
-        await sidePrompt.hide();
+        await sideQuery.hide();
     });
 
     context.eventSource.on(event_types.GENERATION_STARTED, async () => {
-        await sidePrompt.stIsGenerating(true);
+        await sideQuery.stIsGenerating(true);
     });
 
     context.eventSource.on(event_types.GENERATION_STOPPED, async () => {
-        await sidePrompt.stIsGenerating(false);
-        await sidePrompt.terminateIfGenerating();
+        await sideQuery.stIsGenerating(false);
+        await sideQuery.terminateIfGenerating();
     });
 
     context.eventSource.on(event_types.GENERATION_ENDED, async () => {
-        await sidePrompt.stIsGenerating(false);
+        await sideQuery.stIsGenerating(false);
     });
 
     $button.on('click', async () => {
-        log('Opened prompt');
-        await sidePrompt.toggleVisibility();
-        if (!sidePrompt.hidden) {
-            await sidePrompt.load();
+        log('Opened query');
+        await sideQuery.toggleVisibility();
+        if (!sideQuery.hidden) {
+            await sideQuery.load();
         }
     });
 
