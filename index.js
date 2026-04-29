@@ -11,8 +11,8 @@ import {
 import {EXTENSION_NAME, EXTENSION_PATH, MODULE_NAME, VERSION} from './conf.js';
 import {renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
-import {getCharacterCardFields, getMaxQueryTokens, messageFormatting} from "/script.js";
-import {getWorldInfoQuery} from "/scripts/world-info.js";
+import {getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
+import {getWorldInfoPrompt} from "/scripts/world-info.js";
 
 // eslint-disable-next-line no-undef
 const $ = jQuery;
@@ -206,9 +206,9 @@ class SideQueryContainer {
                 creatorNotes: creatorNotes,
                 trigger: 'normal',
             };
-            let this_max_context = getMaxQueryTokens();
+            let this_max_context = getMaxPromptTokens();
             const { worldInfoString, worldInfoBefore, worldInfoAfter, worldInfoExamples, worldInfoDepth, outletEntries } =
-                await getWorldInfoQuery([], this_max_context, false, globalScanData);
+                await getWorldInfoPrompt([], this_max_context, false, globalScanData);
             if (worldInfoBefore) {
                 queries.push({
                     content: worldInfoBefore,
