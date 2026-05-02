@@ -255,23 +255,22 @@ class SideQueryContainer {
 
 class SideQuery {
 
-    constructor(root) {
-        this.$contentPane = root;
-        this.$root = $(`#${MODULE_NAME}_query_content`);
-        this.$responseContainer = $(`#${MODULE_NAME}_query_response`);
-        this.hidden = true;
+    constructor(parent, $root) {
+        this.parent = parent;
+        this.$root = $root;
+        this.$responseContainer = this.$root.find(`.${MODULE_NAME}_response`);
         this.includePersona = false;
-        this.$includePersona = $(`#${MODULE_NAME}_include_persona`);
+        this.$includePersona = this.$root.find(`.${MODULE_NAME}_include_persona`);
         this.includeCharacters = false;
-        this.$includeCharacters = $(`#${MODULE_NAME}_include_characters`);
+        this.$includeCharacters = this.$root.find(`.${MODULE_NAME}_include_characters`);
         this.includeWorldinfo = false;
-        this.$includeWorldinfo = $(`#${MODULE_NAME}_include_worldinfo`);
+        this.$includeWorldinfo = this.$root.find(`.${MODULE_NAME}_include_worldinfo`);
         this.includeScenario = false;
-        this.$includeScenario = $(`#${MODULE_NAME}_include_scenario`);
-        this.$userQuery = $(`#${MODULE_NAME}_user_input`);
-        this.$undo = $(`#${MODULE_NAME}_undo`);
-        this.$send = $(`#${MODULE_NAME}_send`);
-        this.$generateAgain = $(`#${MODULE_NAME}_generate_again`);
+        this.$includeScenario = this.$root.find(`.${MODULE_NAME}_include_scenario`);
+        this.$userQuery = this.$root.find(`.${MODULE_NAME}_user_input`);
+        this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
+        this.$send = this.$root.find(`.${MODULE_NAME}_send`);
+        this.$generateAgain = this.$root.find(`.${MODULE_NAME}_generate_again`);
         this.container = new SideQueryContainer(this, this.$responseContainer);
 
         this.asyncGenerator = null;
@@ -399,8 +398,7 @@ class SideQuery {
         });
     }
 
-    async load() {
-        const saved = getChatMetadata("sideQuery");
+    async load(saved) {
         if (saved) {
             this.loading = true;
             this.includePersona = saved.includePersona;
@@ -419,13 +417,13 @@ class SideQuery {
     }
 
     async save() {
-        setChatMetadata("sideQuery", {
+        await this.parent.saveTab({
             includePersona: this.includePersona,
             includeScenario: this.includeScenario,
             includeCharacters: this.includeCharacters,
             includeWorldinfo: this.includeWorldinfo,
-            chat: this.container.toJSON(),
-        }, true);
+            chat: this.container.toJSON()
+        });
     }
 
     isGenerating() {
@@ -434,7 +432,7 @@ class SideQuery {
 
     async generateReply() {
         context.deactivateSendButtons();
-        this.generatingActive = true;
+        this.parent.generatingActive = true;
         await this.updateButtonStates();
 
         const metadata = initializeRequestMetadata();
@@ -451,7 +449,7 @@ class SideQuery {
                 if (r.done) {
                     this.asyncGenerator = null;
                     this.abort = null;
-                    this.generatingActive = false;
+                    this.parent.generatingActive = false;
                     break;
                 }
 
@@ -475,30 +473,11 @@ class SideQuery {
         return queries;
     }
 
-    async hide() {
-        this.$contentPane.hide();
-        this.hidden = true;
-    }
-
-    async toggleVisibility() {
-        if (this.hidden) {
-            this.$contentPane.show();
-            this.hidden = false;
-        } else {
-            this.$contentPane.hide();
-            this.hidden = true;
-        }
-    }
-
-    async stIsGenerating(isGenerating) {
-        this.generatingActive = isGenerating;
-    }
-
     async updateButtonStates() {
-        sideQuery.$send.attr("disabled", this.generatingActive);
-        sideQuery.$generateAgain.attr("disabled", this.generatingActive || this.container.getLastMessage() == null ||
+        this.$send.attr("disabled", this.parent.generatingActive);
+        this.$generateAgain.attr("disabled", this.parent.generatingActive || this.container.getLastMessage() == null ||
             this.container.getLastMessage().from_user);
-        sideQuery.$undo.attr("disabled", this.generatingActive || this.container.getLastMessage() == null);
+        this.$undo.attr("disabled", this.parent.generatingActive || this.container.getLastMessage() == null);
     }
 
     async terminateIfGenerating() {
@@ -513,7 +492,205 @@ class SideQuery {
 
 }
 
-let sideQuery;
+class SideQueryTabs {
+
+    constructor($root) {
+        this.$root = $root;
+        this.$contentPane = this.$root.find(`#${MODULE_NAME}_query_content`);
+        this.$tabdata = this.$root.find(`#${MODULE_NAME}_tabs_tabcontent`);
+        this.$tabsContainer = this.$contentPane.find(`.${MODULE_NAME}_tabs`);
+        this.$addTabBtn = this.$contentPane.find(`#${MODULE_NAME}_add_tab`);
+        this.tabs = []
+        this.activeTab = null;
+        this.tabData = [];
+        this.generatingActive = false;
+        this.$addTabBtn.on('click', () => this.addNewTab());
+    }
+
+    isGenerating() {
+        return this.tab()?.isGenerating();
+    }
+
+    tab() {
+        return this.tabs.length > 0 ? this.tabs[this.activeTab] : undefined;
+    }
+
+    async hide() {
+        this.$root.hide();
+        this.hidden = true;
+    }
+
+    async toggleVisibility() {
+        if (this.hidden) {
+            this.$root.show();
+            this.hidden = false;
+        } else {
+            this.$root.hide();
+            this.hidden = true;
+        }
+    }
+
+    async stIsGenerating(isGenerating) {
+        this.generatingActive = isGenerating;
+    }
+
+    async terminateIfGenerating() {
+        this.tab()?.terminateIfGenerating();
+    }
+
+    async load() {
+        this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().remove();
+        let saved = getChatMetadata("sideQuery");
+        const meta = getChatMetadata("sideQueryMeta");
+        if (saved) {
+            if (saved.constructor === Object) {
+                saved = [saved];
+            }
+
+            this.tabData = saved;
+        }
+        await this.updateTabs();
+        if (meta) {
+            const activeTab = meta.activeTab;
+            if (activeTab !== null) {
+                await this.onTabClicked(activeTab)
+                this._scrollToActiveTab();
+            }
+        }
+    }
+
+    async saveTab(tabData) {
+        if (this.activeTab !== null) {
+            this.tabData[this.activeTab] = tabData;
+        }
+        await this.save();
+    }
+
+    async save() {
+        setChatMetadata("sideQuery", this.tabData, true);
+        setChatMetadata("sideQueryMeta", {
+            activeTab: this.activeTab
+        });
+    }
+
+    async clear() {
+        this.tabs = [];
+        this.tabData = [];
+        this.activeTab = null;
+        await this.updateTabs();
+    }
+
+    async updateTabs() {
+        this.$tabsContainer.empty();
+
+        for (let i = 0; i < this.tabData.length; i++) {
+            const $tabBtn = $(`
+                    <div class="${MODULE_NAME}_tabbtn ${i === this.activeTab ? 'active' : ''}" data-index="${i}">
+                        <span>Tab ${i + 1}</span>
+                        <i class="fas fa-times close-tab" title="Close Tab"></i>
+                    </div>
+                `);
+
+            $tabBtn.on('click', (e) => {
+                if (this.isGenerating())
+                    return;
+                if ($(e.target).hasClass('close-tab')) {
+                    this.closeTab(i);
+                } else {
+                    this.onTabClicked(i);
+                }
+            });
+
+            this.$tabsContainer.append($tabBtn);
+        }
+
+        if (this.tabs.length !== this.tabData.length) {
+            await this.syncTabs();
+        }
+    }
+
+    async syncTabs() {
+        // Remove existing tab views
+        this.tabs.forEach(t => t.$root?.remove());
+        this.tabs = [];
+
+        // Create new tab instances based on tabData
+        for (let i = 0; i < this.tabData.length; i++) {
+            const $tabRoot = $(QUERY_TEMPLATE).appendTo(this.$tabdata);
+            const tab = new SideQuery(this, $tabRoot);
+            await tab.wire();
+            await tab.load(this.tabData[i]);
+            this.tabs.push(tab);
+        }
+
+        this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
+        if (this.activeTab !== null && this.tabs[this.activeTab]) {
+            this.showActiveTab();
+        }
+    }
+
+    async addNewTab() {
+        if (this.isGenerating())
+            return;
+
+        this.tabData.push({
+            includePersona: false,
+            includeScenario: false,
+            includeCharacters: false,
+            includeWorldinfo: false,
+            chat: { messages: [] }
+        });
+        this.activeTab = this.tabData.length - 1;
+        await this.updateTabs();
+        await this.save();
+    }
+
+    async closeTab(index) {
+        this.tabData.splice(index, 1);
+        this.tabs.splice(index, 1);
+
+        if (this.activeTab === index) {
+            this.activeTab = this.tabData.length > 0 ? 0 : null;
+        } else if (this.activeTab > index) {
+            this.activeTab--;
+        }
+
+        await this.updateTabs();
+        await this.save();
+    }
+
+    async onTabClicked(index) {
+        this.activeTab = index;
+        await this.updateTabs();
+        this.showActiveTab();
+        this._scrollToActiveTab();
+    }
+
+    _scrollToActiveTab() {
+        const $activeTabBtn = this.$tabsContainer.find(`.${MODULE_NAME}_tabbtn.active`);
+        if ($activeTabBtn.length) {
+            const container = this.$tabsContainer[0];
+            const tabBtn = $activeTabBtn[0];
+
+            const scrollLeft = tabBtn.offsetLeft - (container.clientWidth / 2) + (tabBtn.clientWidth / 2);
+            container.scrollTo({
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    showActiveTab() {
+        this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
+        if (this.activeTab !== null && this.tabs[this.activeTab]) {
+            this.tabs[this.activeTab].$root.show();
+        }
+    }
+
+}
+
+let sideQueryTabs;
+let QUERY_TEMPLATE;
 let MESSAGE_TEMPLATE;
 
 $(async function () {
@@ -527,15 +704,20 @@ $(async function () {
         { title: EXTENSION_NAME, version: VERSION }
     );
 
-    const sideQueryTemplate = await renderExtensionTemplateAsync(
+    const tabs = await renderExtensionTemplateAsync(
+        EXTENSION_PATH,
+        'tabs',
+        { title: EXTENSION_NAME, version: VERSION }
+    );
+
+    QUERY_TEMPLATE = await renderExtensionTemplateAsync(
         EXTENSION_PATH,
         'query',
         { title: EXTENSION_NAME, version: VERSION }
     );
-    $('#movingDivs').append(sideQueryTemplate);
+    $('#movingDivs').append(tabs);
     const $sideQuery = $(`#${MODULE_NAME}_query`);
-    sideQuery = new SideQuery($sideQuery);
-    await sideQuery.wire();
+    sideQueryTabs = new SideQueryTabs($sideQuery);
 
     const $button = $(`<button class="${MODULE_NAME}_openButton menu_button interactable"><i class="fas fa-search"></i></button>'`)
     $('body').append($button);
@@ -543,27 +725,30 @@ $(async function () {
 
     context.eventSource.on(event_types.CHAT_CHANGED, async () => {
         $button.attr('disabled', !context.getCurrentChatId());
-        await sideQuery.hide();
+        await sideQueryTabs.hide();
     });
 
     context.eventSource.on(event_types.GENERATION_STARTED, async () => {
-        await sideQuery.stIsGenerating(true);
+        await sideQueryTabs.stIsGenerating(true);
     });
 
     context.eventSource.on(event_types.GENERATION_STOPPED, async () => {
-        await sideQuery.stIsGenerating(false);
-        await sideQuery.terminateIfGenerating();
+        await sideQueryTabs.stIsGenerating(false);
+        await sideQueryTabs.terminateIfGenerating();
     });
 
     context.eventSource.on(event_types.GENERATION_ENDED, async () => {
-        await sideQuery.stIsGenerating(false);
+        await sideQueryTabs.stIsGenerating(false);
     });
 
     $button.on('click', async () => {
         log('Opened query');
-        await sideQuery.toggleVisibility();
-        if (!sideQuery.hidden) {
-            await sideQuery.load();
+        await sideQueryTabs.toggleVisibility();
+        if (!sideQueryTabs.hidden) {
+            await sideQueryTabs.clear();
+            await sideQueryTabs.load();
+        } else {
+            await sideQueryTabs.save();
         }
     });
 

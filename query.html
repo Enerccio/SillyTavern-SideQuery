@@ -1,41 +1,33 @@
-<div id="enerccio_sidequery_query" class="drawer-content flexGap5">
-    <div id="enerccio_sidequery_query_content" name="floatingQueryHolder">
-        <div class="inline-drawer">
-            <div id="ANBlockToggle" class="inline-drawer-toggle inline-drawer-header">
-                <b>Side Query</b>
-                <div class="inline-drawer-icon fa-solid interactable up fa-circle-chevron-up" tabindex="0" role="button"></div>
+<div class="inline-drawer-content enerccio_sidequery_query_body">
+    <div class="enerccio_sidequery_response"></div>
+
+    <div class="enerccio_sidequery_controls">
+        <div class="enerccio_sidequery_checkbox_group">
+            <div class="enerccio_sidequery_checkbox">
+                <label>Include persona <input class="enerccio_sidequery_include_persona" type="checkbox"/></label>
             </div>
-            <div class="inline-drawer-content enerccio_sidequery_query_body">
-                <div id="enerccio_sidequery_query_response" class="enerccio_sidequery_response"></div>
-
-                <div class="enerccio_sidequery_controls">
-                    <div class="enerccio_sidequery_checkbox_group">
-                        <div class="enerccio_sidequery_checkbox">
-                            <label for="enerccio_sidequery_include_persona">Include persona</label><input id="enerccio_sidequery_include_persona" type="checkbox"/>
-                        </div>
-                        <div class="enerccio_sidequery_checkbox">
-                            <label for="enerccio_sidequery_include_characters">Include characters</label><input id="enerccio_sidequery_include_characters" type="checkbox">
-                        </div>
-                        <div class="enerccio_sidequery_checkbox">
-                            <label for="enerccio_sidequery_include_worldinfo">Include worldinfo</label><input id="enerccio_sidequery_include_worldinfo" type="checkbox">
-                        </div>
-                        <div class="enerccio_sidequery_checkbox">
-                            <label for="enerccio_sidequery_include_scenario">Include scenario</label><input id="enerccio_sidequery_include_scenario" type="checkbox">
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <label for="enerccio_sidequery_user_input">Query:</label>
-                    <textarea id="enerccio_sidequery_user_input" placeholder="Enter your query here" rows="4"></textarea>
-
-                    <div id="enerccio_sidequery_button_row" class="enerccio_sidequery_button_row">
-                        <button id="enerccio_sidequery_undo" class="menu_button interactable" type="button">UNDO</button>
-                        <button id="enerccio_sidequery_send" class="menu_button interactable" type="button">SEND</button>
-                        <button id="enerccio_sidequery_generate_again" class="menu_button interactable" type="button">GENERATE AGAIN</button>
-                    </div>
-                </div>
+            <div class="enerccio_sidequery_checkbox">
+                <label>Include characters <input class="enerccio_sidequery_include_characters" type="checkbox"></label>
             </div>
+            <div class="enerccio_sidequery_checkbox">
+                <label>Include worldinfo <input class="enerccio_sidequery_include_worldinfo" type="checkbox"></label>
+            </div>
+            <div class="enerccio_sidequery_checkbox">
+                <label>Include scenario <input class="enerccio_sidequery_include_scenario" type="checkbox"></label>
+            </div>
+        </div>
+
+        <hr>
+
+        <label>
+            Query:
+            <textarea class="enerccio_sidequery_user_input" placeholder="Enter your query here" rows="4"></textarea>
+        </label>
+
+        <div class="enerccio_sidequery_button_row">
+            <button class="enerccio_sidequery_undo menu_button interactable" type="button">UNDO</button>
+            <button class="enerccio_sidequery_send menu_button interactable" type="button">SEND</button>
+            <button class="enerccio_sidequery_generate_again menu_button interactable" type="button">GENERATE AGAIN</button>
         </div>
     </div>
 </div>

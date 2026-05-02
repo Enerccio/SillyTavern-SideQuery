@@ -54,13 +54,12 @@
 
 .enerccio_sidequery_response {
     overflow-y: auto;
-    flex: 1 1 auto;
+    flex: 0 1 auto;
     min-height: 0;
 }
 
 .enerccio_sidequery_controls {
-    flex: 0 0 auto;
-    padding-top: 10px;
+    flex: 1 1 auto;
     display: block;
 }
 
@@ -148,4 +147,55 @@
 .enerccio_sidequery_message_right .enerccio_sidequery_message_content {
     border-left-color: color-mix(in srgb, var(--SmartThemeQuoteColor) 70%, var(--SmartThemeBorderColor));
     background-color: color-mix(in srgb, var(--SmartThemeBotMesBlurTintColor) 75%, #4a341d 25%);
+}
+
+.enerccio_sidequery_tabs_header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+    margin-bottom: 10px;
+}
+
+.enerccio_sidequery_tabs {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+    overflow-x: auto;
+    flex: 1;
+}
+
+.enerccio_sidequery_tabpane {
+
+}
+
+.enerccio_sidequery_tabbtn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 5px 5px 0 0;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.9em;
+}
+
+.enerccio_sidequery_tabbtn .close-tab {
+    font-size: 0.8em;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.enerccio_sidequery_tabbtn .close-tab:hover {
+    opacity: 1;
+    color: #ff4d4d;
+}
+
+.enerccio_sidequery_tabbtn.active {
+    background-color: var(--SmartThemeBorderColor);
+    font-weight: bold;
+    border-bottom: 2px solid blue;
 }
