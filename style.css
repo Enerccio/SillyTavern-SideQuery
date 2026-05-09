@@ -59,8 +59,9 @@
 }
 
 .enerccio_sidequery_controls {
-    flex: 1 1 auto;
     display: block;
+    flex: 0 0 300px;
+    height: 300px;
 }
 
 .enerccio_sidequery_checkbox_group {

@@ -1,4 +1,5 @@
 import {
+    error,
     getChatMetadata,
     getSettings,
     initializeRequestMetadata,
@@ -308,12 +309,16 @@ class SideQuery {
         await this._setupAutoscroll();
 
         this.$send.on('click', async () => {
-            const val = this.$userQuery.val();
-            if (val) {
-                this.$userQuery.val('');
-                await this.container.insertUserMessage(val);
-                this._scrollToBottom();
-                await this.updateButtonStates();
+            if (this.isGenerating()) {
+                await this.terminateIfGenerating();
+            } else {
+                const val = this.$userQuery.val();
+                if (val) {
+                    this.$userQuery.val('');
+                    await this.container.insertUserMessage(val);
+                    this._scrollToBottom();
+                    await this.updateButtonStates();
+                }
             }
         });
 
@@ -431,12 +436,9 @@ class SideQuery {
     }
 
     async generateReply() {
-        context.deactivateSendButtons();
-        this.parent.generatingActive = true;
-        await this.updateButtonStates();
-
         const metadata = initializeRequestMetadata();
         this.abort = new AbortController();
+        await this.updateButtonStates();
         const profile = metadata.cId;
         let asyncGeneratorFunction = await context.ConnectionManagerRequestService.sendRequest(profile, await this.gatherQueryData(),
             profile.max_tokens, {stream: true, signal: this.abort.signal});
@@ -449,7 +451,6 @@ class SideQuery {
                 if (r.done) {
                     this.asyncGenerator = null;
                     this.abort = null;
-                    this.parent.generatingActive = false;
                     break;
                 }
 
@@ -460,9 +461,15 @@ class SideQuery {
                 await this.save();
             }
         } catch (aborted) {
-
+            if (aborted === 'userStopped') {
+                log('Query generation aborted by user');
+            } else {
+                error("Query generation failed: " + aborted);
+            }
+            this.asyncGenerator = null;
+            this.abort = null;
         }
-        context.activateSendButtons();
+        await this.updateButtonStates();
     }
 
     async gatherQueryData() {
@@ -474,10 +481,11 @@ class SideQuery {
     }
 
     async updateButtonStates() {
-        this.$send.attr("disabled", this.parent.generatingActive);
-        this.$generateAgain.attr("disabled", this.parent.generatingActive || this.container.getLastMessage() == null ||
+        this.$send.removeAttr("disabled");
+        this.$send.text(this.isGenerating() ? 'STOP' : 'SEND');
+        this.$generateAgain.attr("disabled", this.isGenerating() || this.container.getLastMessage() == null ||
             this.container.getLastMessage().from_user);
-        this.$undo.attr("disabled", this.parent.generatingActive || this.container.getLastMessage() == null);
+        this.$undo.attr("disabled", this.isGenerating() || this.container.getLastMessage() == null);
     }
 
     async terminateIfGenerating() {
@@ -503,12 +511,16 @@ class SideQueryTabs {
         this.tabs = []
         this.activeTab = null;
         this.tabData = [];
-        this.generatingActive = false;
         this.$addTabBtn.on('click', () => this.addNewTab());
     }
 
     isGenerating() {
-        return this.tab()?.isGenerating();
+        for (let tab of this.tabs) {
+            if (tab.isGenerating()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     tab() {
@@ -528,14 +540,6 @@ class SideQueryTabs {
             this.$root.hide();
             this.hidden = true;
         }
-    }
-
-    async stIsGenerating(isGenerating) {
-        this.generatingActive = isGenerating;
-    }
-
-    async terminateIfGenerating() {
-        this.tab()?.terminateIfGenerating();
     }
 
     async load() {
@@ -657,6 +661,7 @@ class SideQueryTabs {
 
         await this.updateTabs();
         await this.save();
+        await this.onTabClicked(this.activeTab);
     }
 
     async onTabClicked(index) {
@@ -726,19 +731,6 @@ $(async function () {
     context.eventSource.on(event_types.CHAT_CHANGED, async () => {
         $button.attr('disabled', !context.getCurrentChatId());
         await sideQueryTabs.hide();
-    });
-
-    context.eventSource.on(event_types.GENERATION_STARTED, async () => {
-        await sideQueryTabs.stIsGenerating(true);
-    });
-
-    context.eventSource.on(event_types.GENERATION_STOPPED, async () => {
-        await sideQueryTabs.stIsGenerating(false);
-        await sideQueryTabs.terminateIfGenerating();
-    });
-
-    context.eventSource.on(event_types.GENERATION_ENDED, async () => {
-        await sideQueryTabs.stIsGenerating(false);
     });
 
     $button.on('click', async () => {
