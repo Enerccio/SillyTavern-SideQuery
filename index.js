@@ -24,6 +24,7 @@ class SideQueryMessage {
     constructor() {
         this.from_user = false;
         this.contents = "";
+        this.reasoning = "";
         this.$element = undefined;
     }
 
@@ -31,13 +32,15 @@ class SideQueryMessage {
         const message = new SideQueryMessage();
         message.from_user = data.from_user;
         message.contents = data.contents;
+        message.reasoning = data.reasoning;
         return message;
     }
 
     toJSON() {
         return {
             from_user: this.from_user,
-            contents: this.contents
+            contents: this.contents,
+            reasoning: this.reasoning,
         };
     }
 
@@ -45,13 +48,15 @@ class SideQueryMessage {
         const message = new SideQueryMessage();
         message.from_user = true;
         message.contents = val;
+        message.reasoning = undefined;
         return message;
     }
 
-    static fromAI(val) {
+    static fromAI(val, reasoning) {
         const message = new SideQueryMessage();
         message.from_user = false;
         message.contents = val;
+        message.reasoning = reasoning;
         return message;
     }
 
@@ -83,6 +88,13 @@ class SideQueryMessage {
         }
     }
 
+    setReasoning(reasoning) {
+        this.reasoning = reasoning;
+        if (this.$element) {
+            this._update();
+        }
+    }
+
     async removeDiv() {
         this.$element.remove();
         this.$element = undefined;
@@ -91,6 +103,16 @@ class SideQueryMessage {
     _update() {
         this.$element.find('.enerccio_sidequery_message_content')[0].innerHTML
             = messageFormatting(this.contents, "", false, false, -1);
+
+        const $reasoningDetails = this.$element.find('.mes_reasoning_details');
+        const $reasoningContent = this.$element.find('.mes_reasoning');
+
+        if (this.reasoning) {
+            $reasoningDetails.show();
+            $reasoningContent[0].innerHTML = messageFormatting(this.reasoning, "", false, false, -1);
+        } else {
+            $reasoningDetails.hide();
+        }
     }
 }
 
@@ -118,7 +140,7 @@ class SideQueryContainer {
     }
 
     async insertAIMessage(val) {
-        const m = SideQueryMessage.fromAI(val);
+        const m = SideQueryMessage.fromAI(val, undefined);
         this.messages.push(m);
         await m.addTo(this.$container);
         await this.sideQuery.save();
@@ -224,19 +246,12 @@ class SideQueryContainer {
             }
         }
 
-        this.messages.forEach(message => {
-            queries.push({
-                content: message.contents,
-                role: message.from_user ? "user" : "assistant",
-            });
-        });
-
         const beforeLastMessage = getSettings("before_last_message");
         this.messages.forEach((message, index) => {
             if (index === this.messages.length - 1)
                 if (beforeLastMessage) {
                     queries.push({
-                        content: firstMessage,
+                        content: beforeLastMessage,
                         role: "system",
                     })
                 }
@@ -472,8 +487,12 @@ class SideQuery {
 
                 const returnFromGenerator = r.value;
                 text = returnFromGenerator.text;
+                const reasoning = returnFromGenerator.state?.reasoning;
 
                 m.setText(text);
+                if (reasoning)
+                    m.setReasoning(reasoning)
+
                 await this.save();
             }
         } catch (aborted) {

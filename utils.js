@@ -264,7 +264,7 @@ Use the knowledge of the provided lore and characters to answer the user's quest
 
     const $queryLast = $("#enerccio_sidequery_beforelast_message");
     $queryLast.on('input', () => {
-        setSettings('before_last_message', $query.val());
+        setSettings('before_last_message', $queryLast.val());
     });
     $queryLast.val(getSettings('before_last_message', false, ``));
 }
