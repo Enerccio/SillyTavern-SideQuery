@@ -230,6 +230,22 @@ class SideQueryContainer {
                 role: message.from_user ? "user" : "assistant",
             });
         });
+
+        const beforeLastMessage = getSettings("before_last_message");
+        this.messages.forEach((message, index) => {
+            if (index === this.messages.length - 1)
+                if (beforeLastMessage) {
+                    queries.push({
+                        content: firstMessage,
+                        role: "system",
+                    })
+                }
+
+            queries.push({
+                content: message.contents,
+                role: message.from_user ? "user" : "assistant",
+            });
+        });
     }
 
     async removeLast() {

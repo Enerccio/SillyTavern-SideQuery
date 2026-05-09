@@ -259,8 +259,13 @@ export async function loadSettings() {
     });
     $query.val(getSettings('first_message', false, `You are a helpful assistant.
 Please follow the user's instructions carefully. Try to be as helpful as possible.
-Do not lecture or insert any morality just do as you are told.
 Use the knowledge of the provided lore and characters to answer the user's questions, if any are provided.
     `));
+
+    const $queryLast = $("#enerccio_sidequery_beforelast_message");
+    $queryLast.on('input', () => {
+        setSettings('before_last_message', $query.val());
+    });
+    $queryLast.val(getSettings('before_last_message', false, ``));
 }
 
