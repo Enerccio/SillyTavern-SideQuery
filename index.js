@@ -25,6 +25,8 @@ class SideQueryMessage {
         this.from_user = false;
         this.contents = "";
         this.reasoning = "";
+        this.reasoningFinished = false;
+        this.reasoningTime = undefined;
         this.$element = undefined;
     }
 
@@ -33,6 +35,8 @@ class SideQueryMessage {
         message.from_user = data.from_user;
         message.contents = data.contents;
         message.reasoning = data.reasoning;
+        message.reasoningTime = data.reasoningTime;
+        message.reasoningFinished = data.reasoningFinished;
         return message;
     }
 
@@ -41,6 +45,8 @@ class SideQueryMessage {
             from_user: this.from_user,
             contents: this.contents,
             reasoning: this.reasoning,
+            reasoningTime: this.reasoningTime,
+            reasoningFinished: this.reasoningFinished,
         };
     }
 
@@ -88,8 +94,10 @@ class SideQueryMessage {
         }
     }
 
-    setReasoning(reasoning) {
+    setReasoning(reasoning, reasoningTime, reasoningFinished) {
         this.reasoning = reasoning;
+        this.reasoningTime = reasoningTime;
+        this.reasoningFinished = reasoningFinished;
         if (this.$element) {
             this._update();
         }
@@ -106,10 +114,19 @@ class SideQueryMessage {
 
         const $reasoningDetails = this.$element.find('.mes_reasoning_details');
         const $reasoningContent = this.$element.find('.mes_reasoning');
+        const $reasoningHeader = $reasoningDetails.find('.mes_reasoning_header');
 
         if (this.reasoning) {
             $reasoningDetails.show();
             $reasoningContent[0].innerHTML = messageFormatting(this.reasoning, "", false, false, -1);
+
+            if (this.reasoningTime) {
+                const seconds = (this.reasoningTime / 1000).toFixed(1);
+                if (this.reasoningFinished)
+                    $reasoningHeader.text(`Thought for ${seconds} seconds`);
+                else
+                    $reasoningHeader.text(`Thinking for ${seconds} seconds`);
+            }
         } else {
             $reasoningDetails.hide();
         }
@@ -475,7 +492,10 @@ class SideQuery {
             profile.max_tokens, {stream: true, signal: this.abort.signal});
         const m = await this.container.insertAIMessage("");
         this.asyncGenerator = asyncGeneratorFunction();
+
         let text = "";
+        let reasoningTime = null;
+        let reasoningDone = false;
         try {
             while (true) {
                 let r = await this.asyncGenerator.next();
@@ -489,9 +509,18 @@ class SideQuery {
                 text = returnFromGenerator.text;
                 const reasoning = returnFromGenerator.state?.reasoning;
 
+                if (reasoning && reasoningTime === null) {
+                    reasoningTime = performance.now();
+                }
+
                 m.setText(text);
+
+                if (text) {
+                    reasoningDone = true;
+                }
+
                 if (reasoning)
-                    m.setReasoning(reasoning)
+                    m.setReasoning(reasoning, performance.now() - reasoningTime, reasoningDone);
 
                 await this.save();
             }
