@@ -96,7 +96,8 @@ class SideQueryMessage {
 
     setReasoning(reasoning, reasoningTime, reasoningFinished) {
         this.reasoning = reasoning;
-        this.reasoningTime = reasoningTime;
+        if (!reasoningFinished)
+            this.reasoningTime = reasoningTime;
         this.reasoningFinished = reasoningFinished;
         if (this.$element) {
             this._update();
