@@ -10,7 +10,7 @@ import {
     updateConnectionProfileDropdown
 } from './utils.js';
 import {EXTENSION_NAME, EXTENSION_PATH, MODULE_NAME, VERSION} from './conf.js';
-import {renderExtensionTemplateAsync} from "/scripts/extensions.js";
+import {getContext, renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
 import {getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
 import {getWorldInfoPrompt} from "/scripts/world-info.js";
@@ -264,6 +264,19 @@ class SideQueryContainer {
             }
         }
 
+        if (this.sideQuery.includeMessages) {
+            const count = this.sideQuery.messagesCount;
+            const chatMessages = getContext().chat
+            let chatMessagesData = "";
+            chatMessagesData = chatMessages.slice(-count).map(message => message.mes).join("\n");
+            if (chatMessagesData) {
+                queries.push({
+                    content: chatMessagesData,
+                    role: "system",
+                });
+            }
+        }
+
         const beforeLastMessage = getSettings("before_last_message");
         this.messages.forEach((message, index) => {
             if (index === this.messages.length - 1)
@@ -317,6 +330,10 @@ class SideQuery {
         this.$includeWorldinfo = this.$root.find(`.${MODULE_NAME}_include_worldinfo`);
         this.includeScenario = false;
         this.$includeScenario = this.$root.find(`.${MODULE_NAME}_include_scenario`);
+        this.includeMessages = false;
+        this.$includeMessages = this.$root.find(`.${MODULE_NAME}_include_messages`);
+        this.messagesCount = 5;
+        this.$messagesCount = this.$root.find(`.${MODULE_NAME}_messages_count`);
         this.$userQuery = this.$root.find(`.${MODULE_NAME}_user_input`);
         this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
         this.$send = this.$root.find(`.${MODULE_NAME}_send`);
@@ -352,6 +369,18 @@ class SideQuery {
         this.$includeScenario.on('change', async () => {
             if (this.loading) return;
             this.includeScenario = !!this.$includeScenario.prop('checked');
+            await this.save();
+        });
+
+        this.$includeMessages.on('change', async () => {
+            if (this.loading) return;
+            this.includeMessages = !!this.$includeMessages.prop('checked');
+            await this.save();
+        });
+
+        this.$messagesCount.on('change', async () => {
+            if (this.loading) return;
+            this.messagesCount = parseInt(this.$messagesCount.val(), 10) || 0;
             await this.save();
         });
 
@@ -459,6 +488,8 @@ class SideQuery {
             this.includeScenario = saved.includeScenario;
             this.includeCharacters = saved.includeCharacters;
             this.includeWorldinfo = saved.includeWorldinfo;
+            this.includeMessages = saved.includeMessages ?? false;
+            this.messagesCount = saved.messagesCount ?? 5;
             await this.container.fromJson(saved.chat);
             this.loading = false;
 
@@ -466,6 +497,8 @@ class SideQuery {
             this.$includeCharacters.prop('checked', this.includeCharacters);
             this.$includeWorldinfo.prop('checked', this.includeWorldinfo);
             this.$includeScenario.prop('checked', this.includeScenario);
+            this.$includeMessages.prop('checked', this.includeMessages);
+            this.$messagesCount.val(this.messagesCount);
         }
         await this.updateButtonStates();
     }
@@ -476,6 +509,8 @@ class SideQuery {
             includeScenario: this.includeScenario,
             includeCharacters: this.includeCharacters,
             includeWorldinfo: this.includeWorldinfo,
+            includeMessages: this.includeMessages,
+            messagesCount: this.messagesCount,
             chat: this.container.toJSON()
         });
     }
@@ -707,6 +742,8 @@ class SideQueryTabs {
             includeScenario: false,
             includeCharacters: false,
             includeWorldinfo: false,
+            includeMessages: false,
+            messagesCount: 5,
             chat: { messages: [] }
         });
         this.activeTab = this.tabData.length - 1;
