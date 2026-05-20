@@ -1,12 +1,30 @@
 # SillyTavern-SideQuery
-This extension adds a side query button to the bottom of the screen. You can use side query to generate AI responses based on the current chat worldinfo and characters and persona.
+This extension adds a side query panel to SillyTavern, allowing you to generate AI responses based on the current chat's worldinfo, characters, and persona without interfering with the main chat flow.
 
-Every side query is saved with the current chat.
+Every side query session is saved with the current chat, ensuring your research and notes persist.
+
+## Features
+- **Multi-Tab Support**: Create multiple query tabs to track different threads of thought or research simultaneously.
+- **Customizable Context**: Choose exactly what information is sent to the AI for each query:
+    - Persona
+    - Character definitions
+    - World Info (Lorebook)
+    - Scenario
+    - Last N messages from the current chat
+- **Independent Connection**: Use a different connection profile for side queries than the one used for the main chat.
+- **Thought Process Visibility**: Supports displaying reasoning/thinking blocks if the underlying model provides them.
+- **Chat Management**: Undo last messages or regenerate the last AI response.
 
 ## How to install
-1. Paste an url of this repository into the Install extension dialog.
-2. Go to the Extensions tab and choose a connection for the side query.
-3. (optionally) Change the initial query sent.
+1. Paste the URL of this repository into the **Install extension** dialog in SillyTavern.
+2. Go to the **Extensions** tab to configure the connection profile for side queries.
+3. (Optional) Customize the initial system query and instructions in the settings.
+
+## Configuration
+In the extension settings, you can:
+- **Connection Profile**: Select a specific profile or use the "Same as Current" setting.
+- **Initial Query**: Define the system prompt that initializes every new side query.
+- **Instructions before user input**: Add specific formatting or behavioral instructions that are injected immediately before your query.
 
 ## Example
 
