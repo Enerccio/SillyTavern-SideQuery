@@ -1,4 +1,5 @@
 import {
+    countTokens,
     error,
     getChatMetadata,
     getSettings,
@@ -14,6 +15,7 @@ import {getContext, renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
 import {chat, getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
 import {getWorldInfoPrompt} from "/scripts/world-info.js";
+import {countTokensOpenAIAsync} from "/scripts/tokenizers.js";
 
 // eslint-disable-next-line no-undef
 const $ = jQuery;
@@ -167,6 +169,16 @@ class SideQueryContainer {
 
     getLastMessage() {
         return this.messages.length === 0 ? null : this.messages[this.messages.length - 1];
+    }
+
+    async countTokens() {
+        const queries = [];
+        await this.insertMessages(queries);
+        let text = "";
+        for (const query of queries) {
+            text += query.content;
+        }
+        return await countTokens(text, 0);
     }
 
     async insertMessages(queries) {
@@ -342,6 +354,7 @@ class SideQuery {
         this.messagesCountTo = 5;
         this.$messagesCountTo = this.$root.find(`.${MODULE_NAME}_messages_count_to`);
         this.$userQuery = this.$root.find(`.${MODULE_NAME}_user_input`);
+        this.$tokenCount = this.$root.find(`.${MODULE_NAME}_query_token_count`);
         this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
         this.$send = this.$root.find(`.${MODULE_NAME}_send`);
         this.$generateAgain = this.$root.find(`.${MODULE_NAME}_generate_again`);
@@ -359,42 +372,49 @@ class SideQuery {
             if (this.loading) return;
             this.includePersona = !!this.$includePersona.prop('checked');
             await this.save();
+            await this.updateTokenCount();
         });
 
         this.$includeCharacters.on('change', async () => {
             if (this.loading) return;
             this.includeCharacters = !!this.$includeCharacters.prop('checked');
             await this.save();
+            await this.updateTokenCount();
         });
 
         this.$includeWorldinfo.on('change', async () => {
             if (this.loading) return;
             this.includeWorldinfo = !!this.$includeWorldinfo.prop('checked');
             await this.save();
+            await this.updateTokenCount();
         });
 
         this.$includeScenario.on('change', async () => {
             if (this.loading) return;
             this.includeScenario = !!this.$includeScenario.prop('checked');
             await this.save();
+            await this.updateTokenCount();
         });
 
         this.$includeMessages.on('change', async () => {
             if (this.loading) return;
             this.includeMessages = !!this.$includeMessages.prop('checked');
             await this.save();
+            await this.updateTokenCount();
         });
 
         this.$messagesCount.on('change', async () => {
             if (this.loading) return;
             this.messagesCount = parseInt(this.$messagesCount.val(), 10) || 0;
             await this.save();
+            await this.updateTokenCount();
         });
 
         this.$messagesCountTo.on('change', async () => {
             if (this.loading) return;
             this.messagesCountTo = parseInt(this.$messagesCountTo.val(), 10) || 0;
             await this.save();
+            await this.updateTokenCount();
         });
 
         await this._setupAutoscroll();
@@ -515,6 +535,7 @@ class SideQuery {
             this.$messagesCountTo.val(this.messagesCountTo);
         }
         await this.updateButtonStates();
+        await this.updateTokenCount();
     }
 
     async save() {
@@ -586,6 +607,7 @@ class SideQuery {
             this.abort = null;
         }
         await this.updateButtonStates();
+        await this.updateTokenCount();
     }
 
     async gatherQueryData() {
@@ -594,6 +616,11 @@ class SideQuery {
         await this.container.insertMessages(queries);
 
         return queries;
+    }
+
+    async updateTokenCount() {
+        const tokenCount = await this.container.countTokens();
+        this.$tokenCount.text(`Token Count: ${tokenCount}`);
     }
 
     async updateButtonStates() {
