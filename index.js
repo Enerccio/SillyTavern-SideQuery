@@ -12,7 +12,7 @@ import {
 import {EXTENSION_NAME, EXTENSION_PATH, MODULE_NAME, VERSION} from './conf.js';
 import {getContext, renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
-import {getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
+import {chat, getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
 import {getWorldInfoPrompt} from "/scripts/world-info.js";
 
 // eslint-disable-next-line no-undef
@@ -266,9 +266,14 @@ class SideQueryContainer {
 
         if (this.sideQuery.includeMessages) {
             const count = this.sideQuery.messagesCount;
+            const countFrom = this.sideQuery.messagesCountTo;
             const chatMessages = getContext().chat
             let chatMessagesData = "";
-            chatMessagesData = chatMessages.slice(-count).map(message => message.mes).join("\n");
+            for (let i=countFrom; i>=count; i--) {
+                if (chatMessages[i]) {
+                    chatMessagesData += chatMessages[i].mes + "\n";
+                }
+            }
             if (chatMessagesData) {
                 queries.push({
                     content: chatMessagesData,
@@ -333,7 +338,9 @@ class SideQuery {
         this.includeMessages = false;
         this.$includeMessages = this.$root.find(`.${MODULE_NAME}_include_messages`);
         this.messagesCount = 5;
-        this.$messagesCount = this.$root.find(`.${MODULE_NAME}_messages_count`);
+        this.$messagesCount = this.$root.find(`.${MODULE_NAME}_messages_count_from`);
+        this.messagesCountTo = 5;
+        this.$messagesCountTo = this.$root.find(`.${MODULE_NAME}_messages_count_to`);
         this.$userQuery = this.$root.find(`.${MODULE_NAME}_user_input`);
         this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
         this.$send = this.$root.find(`.${MODULE_NAME}_send`);
@@ -381,6 +388,12 @@ class SideQuery {
         this.$messagesCount.on('change', async () => {
             if (this.loading) return;
             this.messagesCount = parseInt(this.$messagesCount.val(), 10) || 0;
+            await this.save();
+        });
+
+        this.$messagesCountTo.on('change', async () => {
+            if (this.loading) return;
+            this.messagesCountTo = parseInt(this.$messagesCountTo.val(), 10) || 0;
             await this.save();
         });
 
@@ -499,6 +512,7 @@ class SideQuery {
             this.$includeScenario.prop('checked', this.includeScenario);
             this.$includeMessages.prop('checked', this.includeMessages);
             this.$messagesCount.val(this.messagesCount);
+            this.$messagesCountTo.val(this.messagesCountTo);
         }
         await this.updateButtonStates();
     }
@@ -511,6 +525,7 @@ class SideQuery {
             includeWorldinfo: this.includeWorldinfo,
             includeMessages: this.includeMessages,
             messagesCount: this.messagesCount,
+            messagesCountTo: this.messagesCountTo,
             chat: this.container.toJSON()
         });
     }
@@ -524,7 +539,8 @@ class SideQuery {
         this.abort = new AbortController();
         await this.updateButtonStates();
         const profile = metadata.cId;
-        let asyncGeneratorFunction = await context.ConnectionManagerRequestService.sendRequest(profile, await this.gatherQueryData(),
+        const queryData = await this.gatherQueryData();
+        let asyncGeneratorFunction = await context.ConnectionManagerRequestService.sendRequest(profile, queryData,
             profile.max_tokens, {stream: true, signal: this.abort.signal});
         const m = await this.container.insertAIMessage("");
         this.asyncGenerator = asyncGeneratorFunction();
