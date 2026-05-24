@@ -281,7 +281,7 @@ class SideQueryContainer {
             const countTo = this.sideQuery.messagesCountTo;
             const chatMessages = getContext().chat
             let chatMessagesData = "";
-            for (let i=count; i<=countTo; i--) {
+            for (let i=count; i<=countTo; i++) {
                 if (chatMessages[i]) {
                     chatMessagesData += chatMessages[i].mes + "\n";
                 }
