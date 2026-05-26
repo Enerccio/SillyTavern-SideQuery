@@ -262,11 +262,18 @@ class SideQueryContainer {
                 characterDepthQuery: charDepthQuery,
                 scenario: scenario,
                 creatorNotes: creatorNotes,
-                trigger: 'normal',
+                trigger: 'sidequery',
             };
             let this_max_context = getMaxPromptTokens();
-            const { worldInfoString, worldInfoBefore, worldInfoAfter, worldInfoExamples, worldInfoDepth, outletEntries } =
-                await getWorldInfoPrompt([], this_max_context, false, globalScanData);
+            const {
+                worldInfoString,
+                worldInfoBefore,
+                worldInfoAfter,
+                worldInfoExamples,
+                worldInfoDepth,
+                outletEntries
+            } = await getWorldInfoPrompt([], this_max_context, false, globalScanData);
+
             if (worldInfoBefore) {
                 queries.push({
                     content: worldInfoBefore,
