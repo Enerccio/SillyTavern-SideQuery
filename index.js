@@ -875,19 +875,18 @@ class SideQueryTabs {
 
     async showActiveTab() {
         this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
-        const trashPromises = [];
         for (let t of this.tabs) {
             if (this.activeTab !== null && t) {
                 if (this.tabs[this.activeTab] === t ) {
                     await t.fill();
                     t.$root.show();
                 } else {
-                    t.save();
-                    trashPromises.push(t.trash());
+                    await t.save();
+                    await t.trash();
+                    await t.load(this.tabData[this.tabs.indexOf(t)]);
                 }
             }
         }
-        await Promise.all(trashPromises);
     }
 
 }
