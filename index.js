@@ -650,6 +650,7 @@ class SideQuery {
             this.asyncGenerator = null;
             this.abort = null;
         }
+        await this.save();
         await this.updateButtonStates();
         await this.updateTokenCount();
     }
