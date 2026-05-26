@@ -150,6 +150,11 @@ class SideQueryContainer {
         };
     }
 
+    async trash() {
+        this.messages.forEach(m => m.removeDiv());
+        this.messages = [];
+    }
+
     async insertUserMessage(val) {
         const m = SideQueryMessage.fromUser(val);
         this.messages.push(m);
@@ -365,6 +370,8 @@ class SideQuery {
         this.asyncGenerator = null;
         this.abort = null;
         this.loading = false;
+        this.data = null;
+        this.loaded = false;
     }
 
     async wire() {
@@ -517,15 +524,23 @@ class SideQuery {
     }
 
     async load(saved) {
-        if (saved) {
+        this.saved = saved;
+        this.loaded = false;
+        await this.updateButtonStates();
+        await this.updateTokenCount();
+    }
+
+    async fill() {
+        if (this.saved && !this.loaded) {
             this.loading = true;
-            this.includePersona = saved.includePersona;
-            this.includeScenario = saved.includeScenario;
-            this.includeCharacters = saved.includeCharacters;
-            this.includeWorldinfo = saved.includeWorldinfo;
-            this.includeMessages = saved.includeMessages ?? false;
-            this.messagesCount = saved.messagesCount ?? 5;
-            await this.container.fromJson(saved.chat);
+            this.includePersona = this.saved.includePersona;
+            this.includeScenario = this.saved.includeScenario;
+            this.includeCharacters = this.saved.includeCharacters;
+            this.includeWorldinfo = this.saved.includeWorldinfo;
+            this.includeMessages = this.saved.includeMessages ?? false;
+            this.messagesCount = this.saved.messagesCount ?? 0;
+            this.messagesCountTo = this.saved.messagesCountTo ?? 5;
+            await this.container.fromJson(this.saved.chat);
             this.loading = false;
 
             this.$includePersona.prop('checked', this.includePersona);
@@ -535,9 +550,15 @@ class SideQuery {
             this.$includeMessages.prop('checked', this.includeMessages);
             this.$messagesCount.val(this.messagesCount);
             this.$messagesCountTo.val(this.messagesCountTo);
+            this.loaded = true;
         }
         await this.updateButtonStates();
         await this.updateTokenCount();
+    }
+
+    async trash() {
+        await this.container.trash();
+        this.loaded = false;
     }
 
     async save() {
@@ -774,7 +795,7 @@ class SideQueryTabs {
 
         this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
         if (this.activeTab !== null && this.tabs[this.activeTab]) {
-            this.showActiveTab();
+            await this.showActiveTab();
         }
     }
 
@@ -814,7 +835,7 @@ class SideQueryTabs {
     async onTabClicked(index) {
         this.activeTab = index;
         await this.updateTabs();
-        this.showActiveTab();
+        await this.showActiveTab();
         this._scrollToActiveTab();
     }
 
@@ -832,11 +853,20 @@ class SideQueryTabs {
         }
     }
 
-    showActiveTab() {
+    async showActiveTab() {
         this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
-        if (this.activeTab !== null && this.tabs[this.activeTab]) {
-            this.tabs[this.activeTab].$root.show();
+        const trashPromises = [];
+        for (let t of this.tabs) {
+            if (this.activeTab !== null && t) {
+                if (this.tabs[this.activeTab] === t ) {
+                    await t.fill();
+                    t.$root.show();
+                } else {
+                    trashPromises.push(t.trash());
+                }
+            }
         }
+        await Promise.all(trashPromises);
     }
 
 }
