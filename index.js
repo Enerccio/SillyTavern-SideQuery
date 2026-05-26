@@ -17,6 +17,8 @@ import {chat, getCharacterCardFields, getMaxPromptTokens, messageFormatting} fro
 import {getWorldInfoPrompt} from "/scripts/world-info.js";
 import {countTokensOpenAIAsync} from "/scripts/tokenizers.js";
 
+const TRIGGER_KEYWORD = 'SIDEQUERY_TRIGGER';
+
 // eslint-disable-next-line no-undef
 const $ = jQuery;
 const context = SillyTavern.getContext();
@@ -254,6 +256,26 @@ class SideQueryContainer {
                 });
         }
 
+        let chatMessagesData = "";
+        if (this.sideQuery.includeMessages) {
+            const count = this.sideQuery.messagesCount;
+            const countTo = this.sideQuery.messagesCountTo;
+            const chatMessages = getContext().chat
+            if (count <= countTo && count >= 0) {
+                for (let i = count; i <= countTo; i++) {
+                    if (chatMessages[i]) {
+                        chatMessagesData += chatMessages[i].mes + "\n";
+                    }
+                }
+            }
+            if (chatMessagesData) {
+                queries.push({
+                    content: chatMessagesData,
+                    role: "system",
+                });
+            }
+        }
+
         if (this.sideQuery.includeWorldinfo) {
             const globalScanData = {
                 personaDescription: persona,
@@ -272,7 +294,7 @@ class SideQueryContainer {
                 worldInfoExamples,
                 worldInfoDepth,
                 outletEntries
-            } = await getWorldInfoPrompt([], this_max_context, false, globalScanData);
+            } = await getWorldInfoPrompt(chatMessagesData ? [chatMessagesData + `\n${TRIGGER_KEYWORD}`] : [ TRIGGER_KEYWORD ], this_max_context, false, globalScanData);
 
             if (worldInfoBefore) {
                 queries.push({
@@ -283,26 +305,6 @@ class SideQueryContainer {
             if (worldInfoAfter) {
                 queries.push({
                     content: worldInfoAfter,
-                    role: "system",
-                });
-            }
-        }
-
-        if (this.sideQuery.includeMessages) {
-            const count = this.sideQuery.messagesCount;
-            const countTo = this.sideQuery.messagesCountTo;
-            const chatMessages = getContext().chat
-            let chatMessagesData = "";
-            if (count <= countTo && count >= 0) {
-                for (let i = count; i <= countTo; i++) {
-                    if (chatMessages[i]) {
-                        chatMessagesData += chatMessages[i].mes + "\n";
-                    }
-                }
-            }
-            if (chatMessagesData) {
-                queries.push({
-                    content: chatMessagesData,
                     role: "system",
                 });
             }
