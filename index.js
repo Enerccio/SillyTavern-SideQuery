@@ -284,7 +284,7 @@ class SideQueryContainer {
                 characterDepthQuery: charDepthQuery,
                 scenario: scenario,
                 creatorNotes: creatorNotes,
-                trigger: 'sidequery',
+                trigger: this.sideQuery.triggerType,
             };
             let this_max_context = getMaxPromptTokens();
             const {
@@ -361,6 +361,8 @@ class SideQuery {
         this.$includeCharacters = this.$root.find(`.${MODULE_NAME}_include_characters`);
         this.includeWorldinfo = false;
         this.$includeWorldinfo = this.$root.find(`.${MODULE_NAME}_include_worldinfo`);
+        this.triggerType = 'normal';
+        this.$triggerType = this.$root.find(`.${MODULE_NAME}_trigger_type`);
         this.includeScenario = false;
         this.$includeScenario = this.$root.find(`.${MODULE_NAME}_include_scenario`);
         this.includeMessages = false;
@@ -403,6 +405,13 @@ class SideQuery {
         this.$includeWorldinfo.on('change', async () => {
             if (this.loading) return;
             this.includeWorldinfo = !!this.$includeWorldinfo.prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+
+        this.$triggerType.on('change', async () => {
+            if (this.loading) return;
+            this.triggerType = this.$triggerType.val() || 'normal';
             await this.save();
             await this.updateTokenCount();
         });
@@ -546,6 +555,7 @@ class SideQuery {
             this.includeScenario = this.saved.includeScenario;
             this.includeCharacters = this.saved.includeCharacters;
             this.includeWorldinfo = this.saved.includeWorldinfo;
+            this.triggerType = this.saved.triggerType ?? 'normal';
             this.includeMessages = this.saved.includeMessages ?? false;
             this.messagesCount = this.saved.messagesCount ?? 0;
             this.messagesCountTo = this.saved.messagesCountTo ?? 5;
@@ -555,6 +565,7 @@ class SideQuery {
             this.$includePersona.prop('checked', this.includePersona);
             this.$includeCharacters.prop('checked', this.includeCharacters);
             this.$includeWorldinfo.prop('checked', this.includeWorldinfo);
+            this.$triggerType.val(this.triggerType);
             this.$includeScenario.prop('checked', this.includeScenario);
             this.$includeMessages.prop('checked', this.includeMessages);
             this.$messagesCount.val(this.messagesCount);
@@ -576,6 +587,7 @@ class SideQuery {
             includeScenario: this.includeScenario,
             includeCharacters: this.includeCharacters,
             includeWorldinfo: this.includeWorldinfo,
+            triggerType: this.triggerType,
             includeMessages: this.includeMessages,
             messagesCount: this.messagesCount,
             messagesCountTo: this.messagesCountTo,

@@ -11,12 +11,15 @@ Every side query session is saved with the current chat, ensuring your research 
     - World Info (Lorebook)
     - Scenario
     - Message range from the current chat
+- **WorldInfo Trigger Optimization**: Squeezed onto a space-saving config line to choose your scanning mode:
+    - **Normal WI**: Standard keyword evaluation against chat history and keywords.
+    - **SideQuery WI**: Forces an isolated scan key to bypass or enforce strict inclusion rules.
 - **Independent Connection**: Use a different connection profile for side queries than the one used for the main chat.
 - **Thought Process Visibility**: Supports displaying reasoning/thinking blocks if the underlying model provides them.
 - **Chat Management**: Undo last messages or regenerate the last AI response.
 - **Include and exclude worldinfo entries**:
-    - **Include**: Select which worldinfo entries to include in the context - use SIDEQUERY_TRIGGER as keyword.
-    - **Exclude**: To exclude specific entries, mark them as all triggers (or at least one of the triggers).
+    - **Include**: Select which worldinfo entries to include in the context - use SIDEQUERY_TRIGGER as a keyword.
+    - **Exclude**: To exclude specific entries, select **SideQuery WI** in the menu and mark those entries with specific native triggers (like Chat, Lore, etc.) in SillyTavern. The scanner will fail to validate them, safely keeping them out of your side panel context.
 
 ## How to install
 1. Paste the URL of this repository into the **Install extension** dialog in SillyTavern.
