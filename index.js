@@ -582,7 +582,7 @@ class SideQuery {
     }
 
     async save() {
-        await this.parent.saveTab({
+        await this.parent.saveTab(this, {
             includePersona: this.includePersona,
             includeScenario: this.includeScenario,
             includeCharacters: this.includeCharacters,
@@ -751,10 +751,8 @@ class SideQueryTabs {
         }
     }
 
-    async saveTab(tabData) {
-        if (this.activeTab !== null) {
-            this.tabData[this.activeTab] = tabData;
-        }
+    async saveTab(tab, tabData) {
+        this.tabData[this.tabs.indexOf(tab)] = tabData;
         await this.save();
     }
 
@@ -884,6 +882,7 @@ class SideQueryTabs {
                     await t.fill();
                     t.$root.show();
                 } else {
+                    t.save();
                     trashPromises.push(t.trash());
                 }
             }
