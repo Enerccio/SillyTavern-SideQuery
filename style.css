@@ -209,3 +209,8 @@
     padding: 2px;
 }
 
+.enerccio_sidequery_message * q::before,
+.enerccio_sidequery_message * q::after {
+    content: none !important;
+}
+
