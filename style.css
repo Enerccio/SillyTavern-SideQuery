@@ -322,3 +322,14 @@
         display: none !important;
     }
 }
+
+.enerccio_sidequery_message_content q::before,
+.enerccio_sidequery_message_content q::after {
+    content: none !important;
+    display: inline-block;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
