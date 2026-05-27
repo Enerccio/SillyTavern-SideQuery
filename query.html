@@ -18,22 +18,20 @@
             </div>
         </div>
 
-        <!-- FIXED: Combined, single-line configuration row -->
-        <div style="display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 8px; margin: 8px 0; width: 100%;">
-            <!-- Left: Message checkbox toggle label -->
+        <div style="display: grid; grid-template-columns: auto auto auto 1fr auto; align-items: center; gap: 8px; margin: 8px 0; width: 100%;">
             <label style="display: flex; align-items: center; gap: 4px; white-space: nowrap; margin: 0;">
                 Messages: <input class="enerccio_sidequery_include_messages" type="checkbox">
             </label>
 
-            <!-- Middle-Left: Dropdown Menu (Shortened label) -->
-            <select class="enerccio_sidequery_trigger_type" style="width: 100%; max-width: 110px; padding: 2px 4px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: var(--border-radius-small); font-size: 0.95em;">
+            <input class="enerccio_sidequery_messages_count_from" type="number" value="5" style="width: 65px; text-align: center; padding: 4px 2px;">
+            <input class="enerccio_sidequery_messages_count_to" type="number" value="5" style="width: 65px; text-align: center; padding: 4px 2px;">
+
+            <div></div>
+
+            <select class="enerccio_sidequery_trigger_type" style="width: 100%; max-width: 110px; padding: 2px 4px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: var(--border-radius-small); font-size: 0.95em; justify-self: end;">
                 <option value="normal">Normal WI</option>
                 <option value="sidequery">SideQuery WI</option>
             </select>
-
-            <!-- Right: Stepper inputs for message range -->
-            <input class="enerccio_sidequery_messages_count_from" type="number" value="5" style="width: 50px; text-align: center; padding: 2px;">
-            <input class="enerccio_sidequery_messages_count_to" type="number" value="5" style="width: 50px; text-align: center; padding: 2px;">
         </div>
 
         <span class="enerccio_sidequery_query_token_count">Token Count: 0</span>

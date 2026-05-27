@@ -280,5 +280,12 @@ Analyze the start of the user's prompt and execute the matching instruction prec
         setSettings('before_last_message', $queryLast.val());
     });
     $queryLast.val(getSettings('before_last_message', false, ``));
+
+    const $enableAiNames = $("#enerccio_sidequery_enable_ai_names");
+    $enableAiNames.on('change', () => {
+        setSettings('enable_ai_names', $enableAiNames.prop('checked'));
+    });
+    // Defaults to false if not explicitly saved yet
+    $enableAiNames.prop('checked', getSettings('enable_ai_names', false, false));
 }
 

@@ -214,3 +214,111 @@
     content: none !important;
 }
 
+/* Styling cues for active drag and drop actions */
+.enerccio_sidequery_tabbtn.dragging {
+    opacity: 0.4;
+    border: 1px dashed var(--SmartThemeBorderColor) !important;
+}
+
+.enerccio_sidequery_tabbtn.drag-over {
+    border-left: 3px solid var(--SmartThemeQuoteColor) !important;
+    transform: scale(1.02);
+    transition: transform 0.1s ease;
+}
+
+/* Increase message input size dimensions and padding */
+.enerccio_sidequery_controls input[type="number"].enerccio_sidequery_messages_count_from,
+.enerccio_sidequery_controls input[type="number"].enerccio_sidequery_messages_count_to {
+    width: 65px !important;
+    height: 26px !important;
+    font-size: 1em !important;
+    padding: 2px 4px !important;
+}
+
+/* Message context exclusion treatments */
+.enerccio_sidequery_message.excluded-context {
+    opacity: 0.5;
+    border-style: dashed !important;
+}
+
+.enerccio_sidequery_message_toggle.is-excluded i {
+    color: #ff4d4d !important;
+}
+
+/* Inline message editing input field */
+.enerccio_sidequery_message_edit_input {
+    width: 100%;
+    min-height: 80px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    border: 1px solid var(--input-border);
+    border-radius: var(--border-radius-small);
+    padding: 6px;
+    font-family: inherit;
+    font-size: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.enerccio_sidequery_tabbtn .edit-tab:hover,
+.enerccio_sidequery_message_pdf:hover i {
+    opacity: 1 !important;
+    color: #ff4d4d !important; /* Soft red indicator for PDF files */
+}
+
+/* PDF Filter Dropdown Overlay Styles */
+.enerccio_sidequery_pdf_menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 4px;
+    background-color: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--border-radius-small);
+    box-shadow: 0 4px 12px var(--black70a);
+    z-index: 5000;
+    min-width: 165px;
+    overflow: hidden;
+}
+
+.enerccio_sidequery_pdf_menu.show {
+    display: block;
+}
+
+.pdf-menu-item {
+    padding: 8px 12px;
+    font-size: 0.85em;
+    cursor: pointer;
+    color: var(--text-color);
+    text-align: left;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.pdf-menu-item:hover {
+    background-color: var(--SmartThemeBorderColor);
+    color: var(--SmartThemeQuoteColor);
+}
+
+.enerccio_sidequery_message_pdf_toggle:hover i {
+    opacity: 1 !important;
+    color: #ff4d4d !important;
+}
+
+/* Generation info layout styles */
+.enerccio_sidequery_message_generation_info {
+    font-size: 0.75em;
+    opacity: 0.45;
+    margin-top: 5px;
+    padding: 0 10px;
+    font-style: italic;
+    color: var(--text-color);
+}
+
+/* Explicitly hide this info element entirely during print media generation queries */
+@media print {
+    .enerccio_sidequery_message_generation_info {
+        display: none !important;
+    }
+}

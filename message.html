@@ -2,13 +2,47 @@
     <div class="enerccio_sidequery_message_header">
         <div class="enerccio_sidequery_message_sender"></div>
 
-        <button
-            class="enerccio_sidequery_message_copy menu_button interactable"
-            type="button"
-            title="Copy message"
-            aria-label="Copy message">
-            <i class="fa-solid fa-copy"></i>
-        </button>
+        <div style="display: flex; gap: 4px; grid-column: 2; justify-self: end; position: relative;">
+            <div class="enerccio_sidequery_pdf_dropdown" style="position: relative; display: inline-block;">
+                <button
+                    class="enerccio_sidequery_message_pdf_toggle menu_button interactable"
+                    type="button"
+                    title="Export history context as PDF..."
+                    aria-label="Export to PDF options">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </button>
+                <div class="enerccio_sidequery_pdf_menu">
+                    <div class="pdf-menu-item" data-type="complete">Full Export</div>
+                    <div class="pdf-menu-item" data-type="no-reasoning">Hide Thought Chains</div>
+                    <div class="pdf-menu-item" data-type="no-user">Hide User Prompts</div>
+                    <div class="pdf-menu-item" data-type="clean-ai">AI Responses Only</div>
+                </div>
+            </div>
+
+            <button
+                class="enerccio_sidequery_message_edit menu_button interactable"
+                type="button"
+                title="Edit message content"
+                aria-label="Edit message">
+                <i class="fa-solid fa-pencil"></i>
+            </button>
+
+            <button
+                class="enerccio_sidequery_message_toggle menu_button interactable"
+                type="button"
+                title="Exclude from next prompt context"
+                aria-label="Toggle message inclusion">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+
+            <button
+                class="enerccio_sidequery_message_copy menu_button interactable"
+                type="button"
+                title="Copy message"
+                aria-label="Copy message">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
     </div>
 
     <details class="mes_reasoning_details" style="display: block;">
@@ -26,4 +60,6 @@
     <div class="enerccio_sidequery_message_content">
 
     </div>
+
+    <div class="enerccio_sidequery_message_generation_info"></div>
 </div>
