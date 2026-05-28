@@ -1409,13 +1409,6 @@ class SideQueryTabs {
         await this.onTabClicked(this.activeTab);
     }
 
-    async onTabClicked(index) {
-        this.activeTab = index;
-        await this.updateTabs();
-        await this.showActiveTab();
-        this._scrollToActiveTab();
-    }
-
     _scrollToActiveTab() {
         const $activeTabBtn = this.$tabsContainer.find(`.${MODULE_NAME}_tabbtn.active`);
         if ($activeTabBtn.length) {
@@ -1430,6 +1423,22 @@ class SideQueryTabs {
         }
     }
 
+    async onTabClicked(index) {
+        if (index === null || this.activeTab === index) {
+            return;
+        }
+
+        // If there's an active tab, save its state before switching away.
+        if (this.activeTab !== null && this.tabs[this.activeTab]) {
+            await this.tabs[this.activeTab].save();
+        }
+
+        this.activeTab = index;
+        await this.updateTabs();
+        await this.showActiveTab();
+        this._scrollToActiveTab();
+    }
+
     async showActiveTab() {
         this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
         for (let t of this.tabs) {
@@ -1438,9 +1447,8 @@ class SideQueryTabs {
                     await t.fill();
                     t.$root.show();
                 } else {
-                    await t.save();
-                    await t.trash();
-                    await t.load(this.tabData[this.tabs.indexOf(t)]);
+                    await t.trash(); // Clear DOM elements for memory
+                    await t.load(this.tabData[this.tabs.indexOf(t)]); // Prepare for next load
                 }
             }
         }
