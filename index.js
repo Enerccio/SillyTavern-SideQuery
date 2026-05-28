@@ -426,6 +426,11 @@ class SideQueryContainer {
         };
     }
 
+    async trash() {
+        this.messages.forEach(m => m.removeDiv());
+        this.messages = [];
+    }
+
     async insertUserMessage(val) {
         const m = SideQueryMessage.fromUser(val);
         this.messages.push(m);
@@ -869,7 +874,7 @@ class SideQuery {
     }
 
     async fill() {
-        if (this.saved) {
+        if (this.saved && !this.loaded) {
             this.loading = true;
             this.includePersona = this.saved.includePersona;
             this.includeScenario = this.saved.includeScenario;
@@ -897,6 +902,11 @@ class SideQuery {
         await this.updateButtonStates();
         await this.updateTokenCount();
         this.restoreScrollPosition();
+    }
+
+    async trash() {
+        await this.container.trash();
+        this.loaded = false;
     }
 
     async save() {
@@ -1429,6 +1439,8 @@ class SideQueryTabs {
                     t.$root.show();
                 } else {
                     await t.save();
+                    await t.trash();
+                    await t.load(this.tabData[this.tabs.indexOf(t)]);
                 }
             }
         }
