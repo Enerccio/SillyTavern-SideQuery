@@ -604,12 +604,6 @@ class SideQueryContainer {
                     }
                 }
             }
-            if (chatMessagesData) {
-                queries.push({
-                    content: chatMessagesData,
-                    role: "system",
-                });
-            }
         }
 
         if (this.sideQuery.includeWorldinfo) {
@@ -644,6 +638,14 @@ class SideQueryContainer {
                     role: "system",
                 });
             }
+        }
+
+        // must be AFTER world info
+        if (chatMessagesData) {
+            queries.push({
+                content: chatMessagesData,
+                role: "system",
+            });
         }
 
         const beforeLastMessage = getSettings("before_last_message");
