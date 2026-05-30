@@ -47,6 +47,7 @@ class SideQueryMessage {
         this.$element = undefined;
         this.included = true;
         this.genInfoText = "";
+        this._updateTimeout = null;
     }
 
     static fromJSON(data) {
@@ -284,6 +285,25 @@ class SideQueryMessage {
         this._updateVisualState();
     }
 
+    _triggerThrottledUpdate() {
+        if (!this.$element) return;
+        // If a rendering cycle is already scheduled, don't flood the engine
+        if (this._updateTimeout) return;
+
+        this._updateTimeout = setTimeout(() => {
+            this._update();
+            this._updateTimeout = null;
+        }, 150); // Cap layout recalculations to ~6 times a second max
+    }
+
+    forceUpdate() {
+        if (this._updateTimeout) {
+            clearTimeout(this._updateTimeout);
+            this._updateTimeout = null;
+        }
+        this._update();
+    }
+
     _updateVisualState() {
         if (!this.$element) return;
         const $toggleBtn = this.$element.find('.enerccio_sidequery_message_toggle');
@@ -302,9 +322,7 @@ class SideQueryMessage {
 
     setText(text) {
         this.contents = text;
-        if (this.$element) {
-            this._update();
-        }
+        this._triggerThrottledUpdate();
     }
 
     setReasoning(reasoning, reasoningTime, reasoningFinished) {
@@ -312,12 +330,14 @@ class SideQueryMessage {
         if (!reasoningFinished)
             this.reasoningTime = reasoningTime;
         this.reasoningFinished = reasoningFinished;
-        if (this.$element) {
-            this._update();
-        }
+        this._triggerThrottledUpdate();
     }
 
     async removeDiv() {
+        if (this._updateTimeout) {
+            clearTimeout(this._updateTimeout);
+            this._updateTimeout = null;
+        }
         if (this.$element) {
             this.$element.remove();
             this.$element = undefined;
@@ -982,8 +1002,6 @@ class SideQuery {
 
                 if (reasoning)
                     m.setReasoning(reasoning, performance.now() - reasoningTime, reasoningDone);
-
-                await this.save();
             }
         } catch (aborted) {
             if (aborted === 'userStopped') {
@@ -993,8 +1011,10 @@ class SideQuery {
             }
             this.asyncGenerator = null;
             this.abort = null;
+        } finally {
+            m.forceUpdate();
+            await this.save();
         }
-        await this.save();
         await this.updateButtonStates();
         await this.updateTokenCount();
 
