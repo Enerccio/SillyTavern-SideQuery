@@ -589,6 +589,7 @@ class SideQueryContainer {
                 scenario: scenario,
                 creatorNotes: creatorNotes,
                 trigger: this.sideQuery.triggerType,
+                // ignoreChecks: true, // TODO: Wait for merge
             };
             let this_max_context = getMaxPromptTokens();
             const {
@@ -1470,6 +1471,8 @@ let MESSAGE_TEMPLATE;
 
 $(async function () {
     log('Loading extension...');
+
+    // addExtensionTrigger("sidequery", "SideQuery");  // TODO: Wait for merge
 
     await loadSettings();
 
