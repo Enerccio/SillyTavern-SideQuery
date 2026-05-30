@@ -1109,6 +1109,13 @@ class SideQueryTabs {
         this.$addTabBtn.on('click', () => this.addNewTab());
     }
 
+    ensureDrawerOpen() {
+        const $drawerContent = this.$root.find('.inline-drawer-content');
+        if ($drawerContent.is(':hidden')) {
+            this.$root.find('.inline-drawer-toggle').trigger('click');
+        }
+    }
+
     isGenerating() {
         for (let tab of this.tabs) {
             if (tab.isGenerating()) {
@@ -1131,6 +1138,7 @@ class SideQueryTabs {
         if (this.hidden) {
             $(`#${MODULE_NAME}_query`).show();
             this.hidden = false;
+            this.ensureDrawerOpen();
             // Restore scroll for the active tab view after opening the main drawer
             const currentTab = this.tab();
             if (currentTab) currentTab.restoreScrollPosition();
