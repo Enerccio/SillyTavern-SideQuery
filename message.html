@@ -3,6 +3,14 @@
         <div class="enerccio_sidequery_message_sender"></div>
 
         <div style="display: flex; gap: 4px; grid-column: 2; justify-self: end; position: relative;">
+            <button
+                class="enerccio_sidequery_message_scroll_bottom menu_button interactable"
+                type="button"
+                title="Scroll to bottom of this message"
+                aria-label="Scroll to bottom">
+                <i class="fa-solid fa-arrow-down"></i>
+            </button>
+
             <div class="enerccio_sidequery_pdf_dropdown" style="position: relative; display: inline-block;">
                 <button
                     class="enerccio_sidequery_message_pdf_toggle menu_button interactable"
@@ -57,9 +65,20 @@
         <div class="mes_reasoning"></div>
     </details>
 
-    <div class="enerccio_sidequery_message_content">
+    <div class="enerccio_sidequery_message_content"></div>
+
+    <div class="enerccio_sidequery_message_footer_row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 6px; padding-right: 4px;">
+
+        <div class="enerccio_sidequery_message_generation_info" style="margin-top: 0; padding: 0 4px; flex: 1;"></div>
+
+        <button
+            class="enerccio_sidequery_message_scroll_top menu_button interactable"
+            type="button"
+            title="Scroll back to top of this message"
+            aria-label="Scroll to top"
+            style="font-size: 0.75em; padding: 2px 6px; opacity: 0.6; display: flex; align-items: center; gap: 4px; white-space: nowrap; margin-left: auto; margin-bottom: 2px;">
+            <i class="fa-solid fa-arrow-up"></i> Top
+        </button>
 
     </div>
-
-    <div class="enerccio_sidequery_message_generation_info"></div>
 </div>

@@ -113,6 +113,18 @@ class SideQueryMessage {
             }
         });
 
+        // Anchor: Scroll until the bottom bounding line of this card is perfectly aligned with the screen container view
+        this.$element.find('.enerccio_sidequery_message_scroll_bottom').on('click', (e) => {
+            e.stopPropagation();
+            this.$element[0].scrollIntoView({ behavior: 'smooth', block: 'end' });
+        });
+
+        // Anchor: Scroll until the top bounding line of this card snaps back to the view ceiling
+        this.$element.find('.enerccio_sidequery_message_scroll_top').on('click', (e) => {
+            e.stopPropagation();
+            this.$element[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
         // Wire up click event for the toggle eye button
         const $toggleBtn = this.$element.find('.enerccio_sidequery_message_toggle');
         $toggleBtn.on('click', async () => {
