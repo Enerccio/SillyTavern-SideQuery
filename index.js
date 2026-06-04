@@ -596,13 +596,28 @@ class SideQueryContainer {
         if (this.sideQuery.includeMessages) {
             const count = this.sideQuery.messagesCount;
             const countTo = this.sideQuery.messagesCountTo;
-            const chatMessages = getContext().chat
+            const chatMessages = getContext().chat; // verify if SillyTavern.getContext() is needed
+
             if (count <= countTo && count >= 0) {
-                for (let i = count; i <= countTo; i++) {
-                    if (chatMessages[i]) {
-                        chatMessagesData += chatMessages[i].mes + "\n";
-                    }
-                }
+                // 1. Filter out the slice of messages we actually care about
+                const targetMessages = chatMessages.slice(count, countTo + 1);
+
+                // 2. Map them to an array of processing promises
+                const processingPromises = targetMessages.map(async (m) => {
+                    if (!m) return "";
+
+                    return (await window.enerccio_compat?.messageProcessor(
+                        m.mes,
+                        {
+                            'role': m.is_user ? 'user' : (m.is_system ? 'system' : 'assistant'),
+                            'content': m.mes
+                        }
+                    )) || m.mes;
+                });
+
+                // 3. Resolve all processing concurrently and join them cleanly
+                const resolvedMessages = await Promise.all(processingPromises);
+                chatMessagesData = resolvedMessages.filter(Boolean).join("\n\n") + "\n\n";
             }
         }
 
@@ -1145,7 +1160,7 @@ class SideQueryTabs {
 
     ensureDrawerOpen() {
         const $drawerContent = this.$root.find('.inline-drawer-content');
-        if ($drawerContent.is(':hidden')) {
+        if ($drawerContent.css('display') === 'none') {
             this.$root.find('.inline-drawer-toggle').trigger('click');
         }
     }
