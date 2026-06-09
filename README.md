@@ -4,10 +4,15 @@ This extension adds a side query panel to SillyTavern, allowing you to generate 
 Every side query session is saved with the current chat, ensuring your research and notes persist.
 
 ## Features
-- **Multi-Tab Support & Drag Reordering**: Create multiple query tabs to track different threads of thought or research simultaneously. Drag and drop tabs horizontally to seamlessly reorganize your workspace.
+- **Multi-Tab Support & Drag Reordering**: Create multiple query tabs to track different threads of thought or research simultaneously. Drag and drop tabs horizontally to seamlessly reorganize your workspace. *(Note: Closing a tab is automatically disabled when it is the last remaining tab to preserve your workspace).*
+- **Persistent Query Storage Presets**: Save, load, and manage your favorite prompt templates directly within the panel using a compact presets bar:
+    - **Select Dropdown**: Selecting a saved preset instantly overwrites the query input textarea with your saved template. The selection automatically resets to empty once you send a query.
+    - **Save (Disk Icon)**: Overwrites the active template with your current input, or triggers the "Save As" inline popup if no preset is currently selected.
+    - **Save As (Folder Plus Icon)**: Opens an absolute-positioned popover to save your active input under a new custom name.
+    - **Delete (Trash Icon)**: Permanently removes the selected preset from your saved configurations.
 - **Flexible Tab Renaming**: Keep tabs structured with descriptive custom titles.
     - Click the **Pencil Edit Icon** next to any tab name to modify it inline.
-    - Alternatively, **Double-Click** the tab header element to rename it.
+- Alternatively, **Double-Click** the tab header element to rename it.
 - **Smart AI Tab Naming (Optional)**: Automatically analyze your first exchange inside a new tab and invoke the AI in the background to generate a short, context-aware title (1-3 words). Features a safety truncation guardrail that cleanly trims long or verbose reasoning model answers down to 25 characters max to keep the UI perfectly compact.
 - **Per-Message Navigation Anchors**: Navigate efficiently through exceptionally long outputs or extensive multi-paragraph descriptions. Every message includes localized anchor actions:
     - Click the **Arrow Down Icon** in the message header tray to smoothly scroll directly down to the bottom line of that specific block.

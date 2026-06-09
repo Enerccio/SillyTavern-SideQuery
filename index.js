@@ -6,7 +6,7 @@ import {
     initializeRequestMetadata,
     loadSettings,
     log,
-    setChatMetadata,
+    setChatMetadata, setSettings,
     toastDebounced,
     updateConnectionProfileDropdown
 } from './utils.js';
@@ -718,6 +718,12 @@ class SideQuery {
         this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
         this.$send = this.$root.find(`.${MODULE_NAME}_send`);
         this.$generateAgain = this.$root.find(`.${MODULE_NAME}_generate_again`);
+
+        this.$savedPrompts = this.$root.find(`.enerccio_sidequery_saved_prompts`);
+        this.$saveBtn = this.$root.find(`.enerccio_sidequery_save`);
+        this.$saveAsBtn = this.$root.find(`.enerccio_sidequery_save_as`);
+        this.$deleteBtn = this.$root.find(`.enerccio_sidequery_delete`);
+
         this.container = new SideQueryContainer(this, this.$responseContainer);
 
         this.asyncGenerator = null;
@@ -731,6 +737,7 @@ class SideQuery {
 
     async wire() {
         await this.updateButtonStates();
+        this.updateSavedQueriesDropdown();
 
         this.$includePersona.on('change', async () => {
             if (this.loading) return;
@@ -788,6 +795,56 @@ class SideQuery {
             await this.updateTokenCount();
         });
 
+        this.$savedPrompts.on('change', () => {
+            const selected = this.$savedPrompts.val();
+            if (selected) {
+                const savedQueries = getSettings('saved_queries', false, {});
+                if (savedQueries[selected] !== undefined) {
+                    this.$userQuery.val(savedQueries[selected]);
+                }
+            }
+        });
+
+        this.$saveBtn.on('click', () => {
+            const selected = this.$savedPrompts.val();
+            const currentText = this.$userQuery.val();
+            if (!currentText.trim()) {
+                toastDebounced('Cannot save an empty query.');
+                return;
+            }
+            if (selected) {
+                const savedQueries = getSettings('saved_queries', true, {});
+                savedQueries[selected] = currentText;
+                setSettings('saved_queries', savedQueries);
+                this.parent.updateAllSavedQueriesDropdowns();
+                toastDebounced(`Overwrote saved query: ${selected}`);
+            } else {
+                this.showSaveAsPopover();
+            }
+        });
+
+        this.$saveAsBtn.on('click', () => {
+            const currentText = this.$userQuery.val();
+            if (!currentText.trim()) {
+                toastDebounced('Cannot save an empty query.');
+                return;
+            }
+            this.showSaveAsPopover();
+        });
+
+        this.$deleteBtn.on('click', () => {
+            const selected = this.$savedPrompts.val();
+            if (!selected) {
+                toastDebounced('Please select a saved query to delete.');
+                return;
+            }
+            const savedQueries = getSettings('saved_queries', true, {});
+            delete savedQueries[selected];
+            setSettings('saved_queries', savedQueries);
+            this.parent.updateAllSavedQueriesDropdowns();
+            toastDebounced(`Deleted query: ${selected}`);
+        });
+
         await this._setupAutoscroll();
 
         this.$send.on('click', async () => {
@@ -797,6 +854,7 @@ class SideQuery {
                 const val = this.$userQuery.val();
                 if (val) {
                     this.$userQuery.val('');
+                    this.$savedPrompts.val('');
                     await this.container.insertUserMessage(val);
                     this._scrollToBottom();
                     await this.updateButtonStates();
@@ -948,9 +1006,72 @@ class SideQuery {
             this.$messagesCountTo.val(this.messagesCountTo);
             this.loaded = true;
         }
+        this.updateSavedQueriesDropdown();
         await this.updateButtonStates();
         await this.updateTokenCount();
         this.restoreScrollPosition();
+    }
+
+    updateSavedQueriesDropdown() {
+        const savedQueries = getSettings('saved_queries', false, {});
+        const currentValue = this.$savedPrompts.val();
+        this.$savedPrompts.empty();
+        this.$savedPrompts.append('<option value="">-- Select Saved Query --</option>');
+        for (const name of Object.keys(savedQueries).sort()) {
+            this.$savedPrompts.append($('<option></option>').val(name).text(name));
+        }
+        if (savedQueries[currentValue] !== undefined) {
+            this.$savedPrompts.val(currentValue);
+        } else {
+            this.$savedPrompts.val('');
+        }
+    }
+
+    showSaveAsPopover() {
+        const $popover = this.$root.find('.enerccio_sidequery_popover');
+        const $input = $popover.find('.enerccio_sidequery_popover_input');
+
+        $input.val(this.$savedPrompts.val() || '');
+        $popover.css('display', 'flex');
+        $input.focus().select();
+
+        $popover.off('click mousedown mouseup keydown keyup').on('click mousedown mouseup keydown keyup', (e) => {
+            e.stopPropagation();
+        });
+
+        const closePopover = () => {
+            $popover.hide();
+            $popover.find('.enerccio_sidequery_popover_ok').off('click');
+            $popover.find('.enerccio_sidequery_popover_cancel').off('click');
+            $input.off('keydown');
+        };
+
+        const submitSaveAs = () => {
+            const name = $input.val().trim();
+            if (!name) {
+                toastDebounced('Please enter a valid name.');
+                return;
+            }
+            const currentText = this.$userQuery.val();
+            const savedQueries = getSettings('saved_queries', true, {});
+            savedQueries[name] = currentText;
+            setSettings('saved_queries', savedQueries);
+
+            this.parent.updateAllSavedQueriesDropdowns();
+            this.$savedPrompts.val(name);
+            toastDebounced(`Saved query: ${name}`);
+            closePopover();
+        };
+
+        $popover.find('.enerccio_sidequery_popover_ok').on('click', submitSaveAs);
+        $popover.find('.enerccio_sidequery_popover_cancel').on('click', closePopover);
+        $input.on('keydown', (e) => {
+            if (e.key === 'Enter') {
+                submitSaveAs();
+            } else if (e.key === 'Escape') {
+                closePopover();
+            }
+        });
     }
 
     async trash() {
@@ -1156,6 +1277,12 @@ class SideQueryTabs {
         this.tabData = [];
         this.isRebuildingLayout = false;
         this.$addTabBtn.on('click', () => this.addNewTab());
+    }
+
+    updateAllSavedQueriesDropdowns() {
+        for (let tab of this.tabs) {
+            tab.updateSavedQueriesDropdown();
+        }
     }
 
     ensureDrawerOpen() {

@@ -60,8 +60,8 @@
 
 .enerccio_sidequery_controls {
     display: block;
-    flex: 0 0 350px;
-    height: 350px;
+    flex: 0 0 360px;
+    height: 360px;
 }
 
 .enerccio_sidequery_checkbox_group {
@@ -85,6 +85,10 @@
 
 .enerccio_sidequery_button_row button {
     flex: 1;
+}
+
+.enerccio_sidequery_button_row button.enerccio_sidequery_send {
+    flex: 0.6;
 }
 
 .enerccio_sidequery_response {

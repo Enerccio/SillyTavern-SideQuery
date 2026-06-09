@@ -38,6 +38,26 @@
 
         <hr style="margin: 6px 0;">
 
+        <!-- Query Storage Panel -->
+        <div class="enerccio_sidequery_storage_panel" style="display: flex; gap: 4px; align-items: center; margin-bottom: 6px; position: relative;">
+            <select class="enerccio_sidequery_saved_prompts" style="flex: 1; padding: 4px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: var(--border-radius-small); font-size: 0.9em; min-width: 0;">
+                <option value="">-- Select Saved Query --</option>
+            </select>
+            <button class="enerccio_sidequery_save menu_button interactable" type="button" title="Save" style="padding: 4px 8px; font-size: 0.85em; flex: 0 0 auto;"><i class="fas fa-save"></i></button>
+            <button class="enerccio_sidequery_save_as menu_button interactable" type="button" title="Save As..." style="padding: 4px 8px; font-size: 0.85em; flex: 0 0 auto;"><i class="fas fa-folder-plus"></i></button>
+            <button class="enerccio_sidequery_delete menu_button interactable" type="button" title="Delete" style="padding: 4px 8px; font-size: 0.85em; flex: 0 0 auto;"><i class="fas fa-trash"></i></button>
+
+            <!-- Save As Popover -->
+            <div class="enerccio_sidequery_popover" style="display: none; position: absolute; bottom: 100%; right: 0; background: var(--SmartThemeBlurTintColor); border: 1px solid var(--SmartThemeBorderColor); border-radius: var(--border-radius-small); padding: 8px; box-shadow: 0 4px 12px var(--black70a); z-index: 6000; flex-direction: column; gap: 6px; width: 220px; box-sizing: border-box; margin-bottom: 4px;">
+                <span style="font-size: 0.85em; font-weight: bold; color: var(--text-color);">Save Query As:</span>
+                <input class="enerccio_sidequery_popover_input" type="text" placeholder="Prompt Name" style="width: 100%; padding: 4px; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border);" />
+                <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                    <button class="enerccio_sidequery_popover_cancel menu_button interactable" type="button" style="padding: 2px 6px; font-size: 0.8em;">Cancel</button>
+                    <button class="enerccio_sidequery_popover_ok menu_button interactable" type="button" style="padding: 2px 6px; font-size: 0.8em;">OK</button>
+                </div>
+            </div>
+        </div>
+
         <label>
             Query:
             <textarea class="enerccio_sidequery_user_input" placeholder="Enter your query here" rows="4"></textarea>
