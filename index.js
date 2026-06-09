@@ -1254,18 +1254,20 @@ class SideQueryTabs {
         this.isRebuildingLayout = true; // Lock scrolling loops while header DOM changes
         this.$tabsContainer.empty();
 
+        const showClose = this.tabData.length > 1;
+
         for (let i = 0; i < this.tabData.length; i++) {
             const tabName = this.tabData[i]?.name || `Tab ${i + 1}`;
             // Added draggable="true" attribute to enable native HTML5 drag capability
             const $tabBtn = $(`
-                    <div class="${MODULE_NAME}_tabbtn ${i === this.activeTab ? 'active' : ''}" data-index="${i}" draggable="true">
-                        <span class="tab-title-text">${tabName}</span>
-                        <div class="tab-actions" style="display: flex; gap: 6px; margin-left: 8px; align-items: center;">
-                            <i class="fas fa-pencil edit-tab" title="Rename Tab" style="font-size: 0.8em; opacity: 0.5; cursor: pointer; transition: opacity 0.2s;"></i>
-                            <i class="fas fa-times close-tab" title="Close Tab"></i>
+                        <div class="${MODULE_NAME}_tabbtn ${i === this.activeTab ? 'active' : ''}" data-index="${i}" draggable="true">
+                            <span class="tab-title-text">${tabName}</span>
+                            <div class="tab-actions" style="display: flex; gap: 6px; margin-left: 8px; align-items: center;">
+                                <i class="fas fa-pencil edit-tab" title="Rename Tab" style="font-size: 0.8em; opacity: 0.5; cursor: pointer; transition: opacity 0.2s;"></i>
+                                <i class="fas fa-times close-tab" title="Close Tab" style="${showClose ? '' : 'display: none;'}"></i>
+                            </div>
                         </div>
-                    </div>
-                `);
+                    `);
 
             // --- Core Drag and Drop Event Routing Mechanics ---
             $tabBtn.on('dragstart', (e) => {
@@ -1452,18 +1454,33 @@ class SideQueryTabs {
     }
 
     async closeTab(index) {
-        this.tabData.splice(index, 1);
-        this.tabs.splice(index, 1);
-
-        if (this.activeTab === index) {
-            this.activeTab = this.tabData.length > 0 ? 0 : null;
-        } else if (this.activeTab > index) {
-            this.activeTab--;
+        if (this.tabData.length <= 1) {
+            return;
         }
 
-        await this.updateTabs();
-        await this.save();
-        await this.onTabClicked(this.activeTab);
+        const wasActive = this.activeTab === index;
+
+        this.tabData.splice(index, 1);
+        const [closedTab] = this.tabs.splice(index, 1);
+        if (closedTab) {
+            await closedTab.trash();
+        }
+
+        if (wasActive) {
+            let newActive = index;
+            if (newActive >= this.tabData.length) {
+                newActive = this.tabData.length - 1;
+            }
+            this.activeTab = null;
+            await this.onTabClicked(newActive);
+            await this.save();
+        } else {
+            if (this.activeTab > index) {
+                this.activeTab--;
+            }
+            await this.updateTabs();
+            await this.save();
+        }
     }
 
     _scrollToActiveTab() {
