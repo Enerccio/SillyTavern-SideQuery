@@ -7,6 +7,7 @@
 
 #enerccio_sidequery_query {
     overflow: hidden;
+    resize: horizontal;
     max-width: 90dvw;
     max-height: 90dvh;
     min-width: 100px;
