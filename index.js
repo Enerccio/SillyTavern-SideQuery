@@ -795,7 +795,19 @@ class SideQuery {
             await this.updateTokenCount();
         });
 
+        this.$userQuery.on('input', () => {
+            this.checkIfPromptModified();
+        });
+
         this.$savedPrompts.on('change', () => {
+            // Clear any asterisks from all options first
+            this.$savedPrompts.find('option').each((idx, el) => {
+                const val = $(el).val();
+                if (val) {
+                    $(el).text(val);
+                }
+            });
+
             const selected = this.$savedPrompts.val();
             if (selected) {
                 const savedQueries = getSettings('saved_queries', false, {});
@@ -854,7 +866,14 @@ class SideQuery {
                 const val = this.$userQuery.val();
                 if (val) {
                     this.$userQuery.val('');
+
+                    // Clear asterisks and reset
+                    this.$savedPrompts.find('option').each((idx, el) => {
+                        const val = $(el).val();
+                        if (val) $(el).text(val);
+                    });
                     this.$savedPrompts.val('');
+
                     await this.container.insertUserMessage(val);
                     this._scrollToBottom();
                     await this.updateButtonStates();
@@ -863,6 +882,16 @@ class SideQuery {
         });
 
         this.$undo.on('click', async () => {
+            const lastMsg = this.container.getLastMessage();
+            if (lastMsg && lastMsg.from_user) {
+                // Clear asterisks and reset the selection before restoring input text
+                this.$savedPrompts.find('option').each((idx, el) => {
+                    const val = $(el).val();
+                    if (val) $(el).text(val);
+                });
+                this.$savedPrompts.val('');
+            }
+
             const m = await this.container.removeLast();
             this._scrollToBottom();
             if (m && m.from_user) {
@@ -1010,6 +1039,26 @@ class SideQuery {
         await this.updateButtonStates();
         await this.updateTokenCount();
         this.restoreScrollPosition();
+    }
+
+    checkIfPromptModified() {
+        const selected = this.$savedPrompts.val();
+        if (!selected) return;
+
+        const savedQueries = getSettings('saved_queries', false, {});
+        const savedText = savedQueries[selected];
+        if (savedText === undefined) return;
+
+        const currentText = this.$userQuery.val();
+        const $option = this.$savedPrompts.find(`option[value="${selected}"]`);
+
+        if (currentText !== savedText) {
+            if (!$option.text().endsWith(' *')) {
+                $option.text(selected + ' *');
+            }
+        } else {
+            $option.text(selected);
+        }
     }
 
     updateSavedQueriesDropdown() {
