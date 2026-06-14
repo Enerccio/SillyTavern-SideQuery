@@ -1378,6 +1378,8 @@ class SideQueryTabs {
     }
 
     async load() {
+        this.currentChatId = SillyTavern.getContext().chatId;
+
         this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().remove();
         let saved = getChatMetadata("sideQuery");
         const meta = getChatMetadata("sideQueryMeta");
@@ -1413,6 +1415,11 @@ class SideQueryTabs {
     }
 
     async save() {
+        if (this.currentChatId && this.currentChatId !== SillyTavern.getContext().chatId) {
+            log("Cross-chat write blocked inside SideQueryTabs.save() to prevent tab data erasure.");
+            return;
+        }
+
         setChatMetadata("sideQuery", this.tabData, true);
         setChatMetadata("sideQueryMeta", {
             activeTab: this.activeTab
@@ -1742,6 +1749,18 @@ $(async function () {
 
     context.eventSource.on(event_types.CHAT_CHANGED, async () => {
         $button.attr('disabled', !context.getCurrentChatId());
+
+        if (sideQueryTabs) {
+            // 1. Proactively abort any active background text generation streams
+            for (let tab of sideQueryTabs.tabs) {
+                if (tab.isGenerating()) {
+                    tab.abort.abort("chatChanged");
+                }
+            }
+            // 2. Clear volatile data allocations from memory to prevent stale reference leaks
+            await sideQueryTabs.clear();
+        }
+
         await sideQueryTabs.hide();
     });
 
