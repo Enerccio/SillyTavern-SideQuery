@@ -769,6 +769,7 @@ class SideQuery {
                 const toggleOffset = this.$optionsToggle.offset();
                 const toggleHeight = this.$optionsToggle.outerHeight();
                 const toggleWidth = this.$optionsToggle.outerWidth();
+
                 const panelHeight = $panel.outerHeight();
                 const panelWidth = $panel.outerWidth();
 
@@ -783,14 +784,18 @@ class SideQuery {
                 const spaceBelow = $(window).height() - (buttonTopViewport + toggleHeight);
 
                 let topPosition;
-                let leftPosition = buttonLeftViewport + toggleWidth - panelWidth; // Flush align right edges
+
+                // CHANGE: Left-align the popover with the button so it expands to the right
+                let leftPosition = buttonLeftViewport;
 
                 // Smart evaluation checklist tracking window estate bounds to flip layout direction
                 if (spaceAbove >= panelHeight + 10 || spaceAbove > spaceBelow) {
-                    topPosition = buttonTopViewport - panelHeight - 6; // Open Upwards
+                    topPosition = buttonTopViewport - panelHeight - 6;
+                    // Open Upwards
                     $panel.removeClass('drop-down-mode');
                 } else {
-                    topPosition = buttonTopViewport + toggleHeight + 4; // Open Downwards
+                    topPosition = buttonTopViewport + toggleHeight + 4;
+                    // Open Downwards
                     $panel.addClass('drop-down-mode');
                 }
 
