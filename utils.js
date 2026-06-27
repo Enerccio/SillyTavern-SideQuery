@@ -288,5 +288,20 @@ Analyze the start of the user's prompt and execute the matching instruction prec
     });
     // Defaults to false if not explicitly saved yet
     $enableAiNames.prop('checked', getSettings('enable_ai_names', false, false));
+
+    // Open Initial Query Popup
+    $('#enerccio_sidequery_btn_first_message').on('click', () => {
+        $('#enerccio_sidequery_modal_first_message').css('display', 'flex');
+    });
+
+    // Open Instructions Popup
+    $('#enerccio_sidequery_btn_beforelast_message').on('click', () => {
+        $('#enerccio_sidequery_modal_beforelast_message').css('display', 'flex');
+    });
+
+    // Close Modals via Close Button or Overlay Click
+    $('.enerccio_sidequery_settings_modal').on('click', '.enerccio_sidequery_modal_close, .enerccio_sidequery_modal_overlay', function () {
+        $(this).closest('.enerccio_sidequery_settings_modal').hide();
+    });
 }
 

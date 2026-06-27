@@ -9,28 +9,47 @@
             <div class="enerccio_sidequery_settings_content">
 
                 <table>
-
                     <tr title="The connection profile to use for side query.">
                         <td><span>Connection Profile</span></td>
                         <td><select id="connection_profile" class="text_pole"></select></td>
                     </tr>
-
                     <tr title="Automatically generate a short title for the tab using AI after the first response.">
                         <td><span>Enable AI Tab Names</span></td>
                         <td><input type="checkbox" id="enerccio_sidequery_enable_ai_names" /></td>
                     </tr>
-
                 </table>
 
-                <div class="flex-container justifyspacebetween alignitemscenter">
-                    <label for="enerccio_sidequery_first_message">Initial query</label>
-                    <textarea id="enerccio_sidequery_first_message" cols="4"></textarea>
+                <div class="flex-container justifyspacebetween alignitemscenter" style="margin-top: 10px; margin-bottom: 8px;">
+                    <span>Initial System Query</span>
+                    <button id="enerccio_sidequery_btn_first_message" class="menu_button interactable" type="button">Edit Initial Query</button>
                 </div>
 
-                <div class="flex-container justifyspacebetween alignitemscenter">
-                    <label for="enerccio_sidequery_beforelast_message">Instructions before user input</label>
-                    <textarea id="enerccio_sidequery_beforelast_message" cols="4"></textarea>
+                <div class="flex-container justifyspacebetween alignitemscenter" style="margin-bottom: 8px;">
+                    <span>Instructions Before User Input</span>
+                    <button id="enerccio_sidequery_btn_beforelast_message" class="menu_button interactable" type="button">Edit Instructions</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="enerccio_sidequery_modal_first_message" class="enerccio_sidequery_settings_modal" style="display: none;">
+        <div class="enerccio_sidequery_modal_overlay"></div>
+        <div class="enerccio_sidequery_modal_box">
+            <h3>Edit Initial Query</h3>
+            <textarea id="enerccio_sidequery_first_message" rows="12" style="width: 100%; height: 350px; resize: vertical; margin-bottom: 12px; font-family: monospace; box-sizing: border-box;"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="enerccio_sidequery_modal_close menu_button interactable" type="button">Save & Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="enerccio_sidequery_modal_beforelast_message" class="enerccio_sidequery_settings_modal" style="display: none;">
+        <div class="enerccio_sidequery_modal_overlay"></div>
+        <div class="enerccio_sidequery_modal_box">
+            <h3>Edit Instructions Before User Input</h3>
+            <textarea id="enerccio_sidequery_beforelast_message" rows="12" style="width: 100%; height: 350px; resize: vertical; margin-bottom: 12px; font-family: monospace; box-sizing: border-box;"></textarea>
+            <div style="display: flex; justify-content: flex-end;">
+                <button class="enerccio_sidequery_modal_close menu_button interactable" type="button">Save & Close</button>
             </div>
         </div>
     </div>
