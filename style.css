@@ -233,11 +233,14 @@
 
 /* Increase message input size dimensions and padding */
 .enerccio_sidequery_controls input[type="number"].enerccio_sidequery_messages_count_from,
-.enerccio_sidequery_controls input[type="number"].enerccio_sidequery_messages_count_to {
+.enerccio_sidequery_controls input[type="number"].enerccio_sidequery_messages_count_to,
+#enerccio_sidequery_global_options input[type="number"].enerccio_sidequery_messages_count_from,
+#enerccio_sidequery_global_options input[type="number"].enerccio_sidequery_messages_count_to {
     width: 65px !important;
     height: 26px !important;
     font-size: 1em !important;
     padding: 2px 4px !important;
+    box-sizing: border-box;
 }
 
 /* Message context exclusion treatments */

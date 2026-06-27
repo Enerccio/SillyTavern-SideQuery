@@ -708,27 +708,19 @@ class SideQuery {
         this.$root = $root;
         this.$responseContainer = this.$root.find(`.${MODULE_NAME}_response`);
         this.includePersona = false;
-        this.$includePersona = this.$root.find(`.${MODULE_NAME}_include_persona`);
         this.includeCharacters = false;
-        this.$includeCharacters = this.$root.find(`.${MODULE_NAME}_include_characters`);
         this.includeWorldinfo = false;
-        this.$includeWorldinfo = this.$root.find(`.${MODULE_NAME}_include_worldinfo`);
         this.macroExpand = true;
-        this.$macroExpand = this.$root.find(`.${MODULE_NAME}_macro_expand`);
         this.triggerType = 'normal';
-        this.$triggerType = this.$root.find(`.${MODULE_NAME}_trigger_type`);
         this.includeScenario = false;
-        this.$includeScenario = this.$root.find(`.${MODULE_NAME}_include_scenario`);
         this.includeMessages = false;
-        this.$includeMessages = this.$root.find(`.${MODULE_NAME}_include_messages`);
         this.messagesCount = 5;
-        this.$messagesCount = this.$root.find(`.${MODULE_NAME}_messages_count_from`);
         this.messagesCountTo = 5;
-        this.$messagesCountTo = this.$root.find(`.${MODULE_NAME}_messages_count_to`);
+
         this.$userQuery = this.$root.find(`.${MODULE_NAME}_user_input`);
         this.$tokenCount = this.$root.find(`.${MODULE_NAME}_query_token_count`);
         this.$optionsToggle = this.$root.find('.enerccio_sidequery_options_menu_trigger');
-        this.$optionsPopover = this.$root.find('.enerccio_sidequery_options_menu_panel');
+
         this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
         this.$send = this.$root.find(`.${MODULE_NAME}_send`);
         this.$generateAgain = this.$root.find(`.${MODULE_NAME}_generate_again`);
@@ -749,6 +741,80 @@ class SideQuery {
         this.isManuallyRenamed = false;
     }
 
+    bindGlobalOptions() {
+        if (!$globalOptionsPopover) return;
+
+        // 1. Clear all old event hooks left behind by previously viewed tabs
+        $globalOptionsPopover.find('input, select').off('.tabContext');
+
+        // 2. Synchronize current input states to reflect this specific tab profile data fields
+        $globalOptionsPopover.find('.enerccio_sidequery_include_persona').prop('checked', this.includePersona);
+        $globalOptionsPopover.find('.enerccio_sidequery_include_characters').prop('checked', this.includeCharacters);
+        $globalOptionsPopover.find('.enerccio_sidequery_include_worldinfo').prop('checked', this.includeWorldinfo);
+        $globalOptionsPopover.find('.enerccio_sidequery_trigger_type').val(this.triggerType);
+        $globalOptionsPopover.find('.enerccio_sidequery_include_scenario').prop('checked', this.includeScenario);
+        $globalOptionsPopover.find('.enerccio_sidequery_macro_expand').prop('checked', this.macroExpand);
+        $globalOptionsPopover.find('.enerccio_sidequery_include_messages').prop('checked', this.includeMessages);
+        $globalOptionsPopover.find('.enerccio_sidequery_messages_count_from').val(this.messagesCount);
+        $globalOptionsPopover.find('.enerccio_sidequery_messages_count_to').val(this.messagesCountTo);
+
+        // 3. Attach fresh event listeners namespaced to this active instance
+        $globalOptionsPopover.find('.enerccio_sidequery_include_persona').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includePersona = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_include_characters').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includeCharacters = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_include_worldinfo').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includeWorldinfo = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_trigger_type').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.triggerType = $(e.target).val() || 'normal';
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_include_scenario').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includeScenario = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_macro_expand').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.macroExpand = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_include_messages').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includeMessages = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_messages_count_from').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.messagesCount = parseInt($(e.target).val(), 10) || 0;
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_messages_count_to').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.messagesCountTo = parseInt($(e.target).val(), 10) || 0;
+            await this.save();
+            await this.updateTokenCount();
+        });
+    }
+
     async wire() {
         await this.updateButtonStates();
         this.updateSavedQueriesDropdown();
@@ -756,137 +822,72 @@ class SideQuery {
         this.$optionsToggle.on('click', (e) => {
             e.stopPropagation();
 
-            // 1. Close any other open configuration panels on the screen first
-            $('.enerccio_sidequery_options_menu_panel').not(this.$optionsPopover).hide();
-
-            const $panel = this.$optionsPopover;
+            // FIX: Use e.currentTarget to always capture the live button reference
+            const $button = $(e.currentTarget);
+            const $panel = $globalOptionsPopover;
             const isVisible = $panel.is(':visible');
 
             if (!isVisible) {
-                // Initialize block display context but keep hidden while calculating dimensions
+                this.bindGlobalOptions();
+
                 $panel.css({ display: 'flex', visibility: 'hidden' });
 
-                const toggleOffset = this.$optionsToggle.offset();
-                const toggleHeight = this.$optionsToggle.outerHeight();
-                const toggleWidth = this.$optionsToggle.outerWidth();
+                // FIX: Use getBoundingClientRect for bulletproof viewport tracking
+                const rect = $button[0].getBoundingClientRect();
+                const buttonTopViewport = rect.top;
+                const buttonLeftViewport = rect.left;
+                const toggleHeight = rect.height;
+                const toggleWidth = rect.width;
 
                 const panelHeight = $panel.outerHeight();
                 const panelWidth = $panel.outerWidth();
 
-                // Compute exact viewport positions relative to window scrolling coordinates
-                const scrollTop = $(window).scrollTop();
-                const scrollLeft = $(window).scrollLeft();
-
-                const buttonTopViewport = toggleOffset.top - scrollTop;
-                const buttonLeftViewport = toggleOffset.left - scrollLeft;
-
-                const spaceAbove = buttonTopViewport;
-                const spaceBelow = $(window).height() - (buttonTopViewport + toggleHeight);
-
+                // Position panel horizontally to the right side of the button
+                let leftPosition = buttonLeftViewport + toggleWidth + 6;
                 let topPosition;
 
-                // CHANGE: Left-align the popover with the button so it expands to the right
-                let leftPosition = buttonLeftViewport;
-
-                // Smart evaluation checklist tracking window estate bounds to flip layout direction
-                if (spaceAbove >= panelHeight + 10 || spaceAbove > spaceBelow) {
-                    topPosition = buttonTopViewport - panelHeight - 6;
-                    // Open Upwards
-                    $panel.removeClass('drop-down-mode');
-                } else {
-                    topPosition = buttonTopViewport + toggleHeight + 4;
-                    // Open Downwards
+                // Dynamic vertical clearance evaluation
+                if (buttonTopViewport + panelHeight <= $(window).height() - 10) {
+                    topPosition = buttonTopViewport;
                     $panel.addClass('drop-down-mode');
+                } else {
+                    topPosition = buttonTopViewport + toggleHeight - panelHeight;
+                    $panel.removeClass('drop-down-mode');
                 }
 
-                // Viewport edge boundary safety rails to guarantee it never gets cut off by screen borders
-                if (leftPosition < 10) leftPosition = 10;
+                // Screen Boundary Safety Rails
                 if (leftPosition + panelWidth > $(window).width() - 10) {
-                    leftPosition = $(window).width() - panelWidth - 10;
+                    leftPosition = buttonLeftViewport - panelWidth - 6;
+                }
+                if (leftPosition < 10) leftPosition = 10;
+                if (topPosition < 10) topPosition = 10;
+                if (topPosition + panelHeight > $(window).height() - 10) {
+                    topPosition = $(window).height() - panelHeight - 10;
                 }
 
-                $panel.css({
-                    top: topPosition + 'px',
-                    left: leftPosition + 'px',
-                    visibility: 'visible'
+                $panel.css({ top: '', left: '' });
+
+                // 2. FORCE the calculated coordinates into the DOM using inline !important overrides
+                $panel[0].style.setProperty('top', topPosition + 'px', 'important');
+                $panel[0].style.setProperty('left', leftPosition + 'px', 'important');
+                $panel[0].style.setProperty('display', 'flex', 'important');
+                $panel[0].style.visibility = 'visible';
+
+                $(document).off('click.options-popover-hide').on('click.options-popover-hide', (ev) => {
+                    if (!$(ev.target).closest($button).length && !$(ev.target).closest($panel).length) {
+                        $panel.hide();
+                        $(document).off('click.options-popover-hide');
+                    }
                 });
             } else {
                 $panel.hide();
+                $(document).off('click.options-popover-hide');
             }
         });
 
-        $(document).on('click.options-popover-hide', (e) => {
-            if (!$(e.target).closest('.enerccio_sidequery_options_container').length) {
-                this.$optionsPopover.hide();
-            }
-        });
-
-        // Protect popover elements against bubbling closures
-        this.$optionsPopover.on('click mousedown mouseup keydown keyup', (e) => {
+        // Intercept bubbling close triggers on menu items
+        $globalOptionsPopover.off('click.prevent-bubble').on('click.prevent-bubble', (e) => {
             e.stopPropagation();
-        });
-
-        this.$includePersona.on('change', async () => {
-            if (this.loading) return;
-            this.includePersona = !!this.$includePersona.prop('checked');
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$includeCharacters.on('change', async () => {
-            if (this.loading) return;
-            this.includeCharacters = !!this.$includeCharacters.prop('checked');
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$includeWorldinfo.on('change', async () => {
-            if (this.loading) return;
-            this.includeWorldinfo = !!this.$includeWorldinfo.prop('checked');
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$triggerType.on('change', async () => {
-            if (this.loading) return;
-            this.triggerType = this.$triggerType.val() || 'normal';
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$includeScenario.on('change', async () => {
-            if (this.loading) return;
-            this.includeScenario = !!this.$includeScenario.prop('checked');
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$includeMessages.on('change', async () => {
-            if (this.loading) return;
-            this.includeMessages = !!this.$includeMessages.prop('checked');
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$messagesCount.on('change', async () => {
-            if (this.loading) return;
-            this.messagesCount = parseInt(this.$messagesCount.val(), 10) || 0;
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$macroExpand.on('change', async () => {
-            if (this.loading) return;
-            this.macroExpand = !!this.$macroExpand.prop('checked');
-            await this.save();
-            await this.updateTokenCount();
-        });
-
-        this.$messagesCountTo.on('change', async () => {
-            if (this.loading) return;
-            this.messagesCountTo = parseInt(this.$messagesCountTo.val(), 10) || 0;
-            await this.save();
-            await this.updateTokenCount();
         });
 
         this.$userQuery.on('input', () => {
@@ -1120,17 +1121,7 @@ class SideQuery {
             this.name = this.saved.name || "";
             this.isManuallyRenamed = this.saved.isManuallyRenamed || false;
             await this.container.fromJson(this.saved.chat);
-            this.loading = false;
-
-            this.$includePersona.prop('checked', this.includePersona);
-            this.$includeCharacters.prop('checked', this.includeCharacters);
-            this.$includeWorldinfo.prop('checked', this.includeWorldinfo);
-            this.$triggerType.val(this.triggerType);
-            this.$includeScenario.prop('checked', this.includeScenario);
-            this.$macroExpand.prop('checked', this.macroExpand);
-            this.$includeMessages.prop('checked', this.includeMessages);
-            this.$messagesCount.val(this.messagesCount);
-            this.$messagesCountTo.val(this.messagesCountTo);
+            this.bindGlobalOptions();
             this.loaded = true;
         }
         this.updateSavedQueriesDropdown();
@@ -1422,7 +1413,7 @@ class SideQueryTabs {
         this.$tabsContainer = this.$contentPane.find(`.${MODULE_NAME}_tabs`);
         this.$addTabBtn = this.$contentPane.find(`#${MODULE_NAME}_add_tab`);
         this.$infoBtn = this.$contentPane.find(`#${MODULE_NAME}_info_btn`);
-        this.$infoPopover = this.$contentPane.find(`#${MODULE_NAME}_info_popover`);
+        this.$infoPopover = $('#enerccio_sidequery_global_info');
         this.currentInfoTab = 'pre'; // Track sub-view state: 'pre' or 'post'
 
         this.tabs = []
@@ -1873,6 +1864,7 @@ class SideQueryTabs {
             return;
         }
 
+        if ($globalOptionsPopover) $globalOptionsPopover.hide();
         this.isSwitchingTab = true;
         try {
             // If there's an active tab, save its state before switching away.
@@ -1921,6 +1913,8 @@ class SideQueryTabs {
 let sideQueryTabs;
 let QUERY_TEMPLATE;
 let MESSAGE_TEMPLATE;
+let $globalOptionsPopover;
+let $globalInfoPopover;
 
 $(async function () {
     log('Loading extension...');
@@ -1944,6 +1938,18 @@ $(async function () {
         'query',
         { title: EXTENSION_NAME, version: VERSION }
     );
+
+    const globalPanelsHtml = await renderExtensionTemplateAsync(
+        EXTENSION_PATH,
+        'global_panels',
+        { title: EXTENSION_NAME, version: VERSION }
+    );
+    $('body').append(globalPanelsHtml);
+
+    // Assign instances to our centralized module trackers
+    $globalOptionsPopover = $('#enerccio_sidequery_global_options');
+    $globalInfoPopover = $('#enerccio_sidequery_global_info');
+
     $('#movingDivs').append(tabs);
     const $sideQuery = $(`#${MODULE_NAME}_query`);
     sideQueryTabs = new SideQueryTabs($sideQuery);
