@@ -756,23 +756,14 @@ class SideQuery {
         this.$optionsToggle.on('click', (e) => {
             e.stopPropagation();
 
-            // 1. Close any other open option panels across other instances first
-            $('.enerccio_sidequery_options_menu_panel').not(this.$optionsPopover).hide().each((idx, el) => {
-                const ref = $(el).data('tab-instance');
-                if (ref) $(el).appendTo(ref.$optionsToggle.parent());
-            });
-            // Also close the info popover if it's currently open
-            $('#enerccio_sidequery_info_popover').hide().appendTo(this.parent.$infoBtn.parent());
+            // 1. Close any other open configuration panels on the screen first
+            $('.enerccio_sidequery_options_menu_panel').not(this.$optionsPopover).hide();
 
             const $panel = this.$optionsPopover;
-            $panel.data('tab-instance', this); // Tag element so we know where it belongs
+            const isVisible = $panel.is(':visible');
 
-            // Check if it's currently open and attached to the document body
-            const isOpenInBody = $panel.is(':visible') && $panel.parent().is('body');
-
-            if (!isOpenInBody) {
-                // CRITICAL FIX: Append directly to body to absolutely escape ancestor clipping contexts
-                $panel.appendTo('body');
+            if (!isVisible) {
+                // Initialize block display context but keep hidden while calculating dimensions
                 $panel.css({ display: 'flex', visibility: 'hidden' });
 
                 const toggleOffset = this.$optionsToggle.offset();
@@ -781,6 +772,7 @@ class SideQuery {
                 const panelHeight = $panel.outerHeight();
                 const panelWidth = $panel.outerWidth();
 
+                // Compute exact viewport positions relative to window scrolling coordinates
                 const scrollTop = $(window).scrollTop();
                 const scrollLeft = $(window).scrollLeft();
 
@@ -791,9 +783,9 @@ class SideQuery {
                 const spaceBelow = $(window).height() - (buttonTopViewport + toggleHeight);
 
                 let topPosition;
-                let leftPosition = buttonLeftViewport + toggleWidth - panelWidth;
+                let leftPosition = buttonLeftViewport + toggleWidth - panelWidth; // Flush align right edges
 
-                // Smart direction calculator
+                // Smart evaluation checklist tracking window estate bounds to flip layout direction
                 if (spaceAbove >= panelHeight + 10 || spaceAbove > spaceBelow) {
                     topPosition = buttonTopViewport - panelHeight - 6; // Open Upwards
                     $panel.removeClass('drop-down-mode');
@@ -802,15 +794,11 @@ class SideQuery {
                     $panel.addClass('drop-down-mode');
                 }
 
-                // Viewport boundary guardrails
+                // Viewport edge boundary safety rails to guarantee it never gets cut off by screen borders
                 if (leftPosition < 10) leftPosition = 10;
                 if (leftPosition + panelWidth > $(window).width() - 10) {
                     leftPosition = $(window).width() - panelWidth - 10;
                 }
-                if (topPosition + panelHeight > $(window).height() - 10) {
-                    topPosition = $(window).height() - panelHeight - 10; // Extra protection
-                }
-                if (topPosition < 10) topPosition = 10;
 
                 $panel.css({
                     top: topPosition + 'px',
@@ -818,18 +806,13 @@ class SideQuery {
                     visibility: 'visible'
                 });
             } else {
-                // If clicked while open, hide it and return it to its native container node
-                $panel.hide().appendTo(this.$optionsToggle.parent());
+                $panel.hide();
             }
         });
 
-        // Global out-of-bounds click listener update
-        $(document).off('click.options-popover-hide').on('click.options-popover-hide', (e) => {
-            if (!$(e.target).closest('.enerccio_sidequery_options_container').length && !$(e.target).closest('.enerccio_sidequery_options_menu_panel').length) {
-                $('.enerccio_sidequery_options_menu_panel').hide().each((idx, el) => {
-                    const ref = $(el).data('tab-instance');
-                    if (ref) $(el).appendTo(ref.$optionsToggle.parent());
-                });
+        $(document).on('click.options-popover-hide', (e) => {
+            if (!$(e.target).closest('.enerccio_sidequery_options_container').length) {
+                this.$optionsPopover.hide();
             }
         });
 
@@ -1448,10 +1431,10 @@ class SideQueryTabs {
     }
 
     _wireInfoPopover() {
+        // Tab switching events inside the popover layout panel itself
         this.$infoPopover.find('.enerccio_sidequery_info_tab').on('click', (e) => {
             e.stopPropagation();
-            const targetTab = $(e.currentTarget).data('info-tab');
-            this.currentInfoTab = targetTab;
+            this.currentInfoTab = $(e.currentTarget).data('info-tab');
 
             this.$infoPopover.find('.enerccio_sidequery_info_tab').removeClass('active');
             $(e.currentTarget).addClass('active');
@@ -1459,36 +1442,33 @@ class SideQueryTabs {
             this._updateInfoPopoverContent();
         });
 
+        // Toggle context logic for the primary information icon click
         this.$infoBtn.on('click', (e) => {
             e.stopPropagation();
 
-            // Close options panels across all instances first
-            $('.enerccio_sidequery_options_menu_panel').hide().each((idx, el) => {
-                const ref = $(el).data('tab-instance');
-                if (ref) $(el).appendTo(ref.$optionsToggle.parent());
-            });
+            // Close standard options dropdown if open to keep things clean
+            $('.enerccio_sidequery_options_menu_panel').hide();
 
-            const $panel = this.$infoPopover;
-            const isOpenInBody = $panel.is(':visible') && $panel.parent().is('body');
-
-            if (!isOpenInBody) {
-                // Escape clipping layouts by dropping onto the body tier
-                $panel.appendTo('body');
-                $panel.css({ display: 'flex', visibility: 'hidden' });
+            const isVisible = this.$infoPopover.is(':visible');
+            if (!isVisible) {
+                this.$infoPopover.css({ display: 'flex', visibility: 'hidden' });
 
                 const btnOffset = this.$infoBtn.offset();
                 const btnWidth = this.$infoBtn.outerWidth();
                 const btnHeight = this.$infoBtn.outerHeight();
-                const panelWidth = $panel.outerWidth();
-                const panelHeight = $panel.outerHeight();
+                const panelWidth = this.$infoPopover.outerWidth();
+                const panelHeight = this.$infoPopover.outerHeight();
 
                 const scrollTop = $(window).scrollTop();
                 const scrollLeft = $(window).scrollLeft();
 
+                // Position flush immediately to the right edge of the info button frame
                 let leftPos = btnOffset.left + btnWidth + 6 - scrollLeft;
                 let topPos = btnOffset.top - scrollTop;
 
+                // Safety guardrails for edge-of-screen constraints
                 if (leftPos + panelWidth > $(window).width() - 10) {
+                    // Fallback: If right edge truncates workspace, flip open to the left side
                     leftPos = btnOffset.left - panelWidth - 6 - scrollLeft;
                 }
                 if (topPos + panelHeight > $(window).height() - 10) {
@@ -1504,13 +1484,19 @@ class SideQueryTabs {
 
                 this._updateInfoPopoverContent();
             } else {
-                $panel.hide().appendTo(this.$infoBtn.parent());
+                this.$infoPopover.hide();
             }
         });
 
-        $(document).off('click.info-popover-hide').on('click.info-popover-hide', (e) => {
-            if (!$(e.target).closest('#enerccio_sidequery_info_btn').length && !$(e.target).closest('.enerccio_sidequery_info_panel').length) {
-                this.$infoPopover.hide().appendTo(this.$infoBtn.parent());
+        // Suppress layout bubbling closure loops when selecting text inside textareas
+        this.$infoPopover.on('click mousedown mouseup keydown keyup', (e) => {
+            e.stopPropagation();
+        });
+
+        // Click wrapper boundary hide routing
+        $(document).on('click.info-popover-hide', (e) => {
+            if (!$(e.target).closest('#enerccio_sidequery_info_btn').length) {
+                this.$infoPopover.hide();
             }
         });
     }
@@ -1551,13 +1537,6 @@ class SideQueryTabs {
     }
 
     async hide() {
-        // Clear out any detached body nodes back to their owners safely
-        $('.enerccio_sidequery_options_menu_panel').hide().each((idx, el) => {
-            const ref = $(el).data('tab-instance');
-            if (ref) $(el).appendTo(ref.$optionsToggle.parent());
-        });
-        this.$infoPopover.hide().appendTo(this.$infoBtn.parent());
-
         this.$root.hide();
         this.hidden = true;
     }
@@ -1891,13 +1870,7 @@ class SideQueryTabs {
 
         this.isSwitchingTab = true;
         try {
-            // Sweep detached floating menus back to their tab parents before loading a new view context
-            $('.enerccio_sidequery_options_menu_panel').hide().each((idx, el) => {
-                const ref = $(el).data('tab-instance');
-                if (ref) $(el).appendTo(ref.$optionsToggle.parent());
-            });
-            this.$infoPopover.hide().appendTo(this.$infoBtn.parent());
-
+            // If there's an active tab, save its state before switching away.
             if (this.activeTab !== null && this.tabs[this.activeTab]) {
                 await this.tabs[this.activeTab].save();
             }
