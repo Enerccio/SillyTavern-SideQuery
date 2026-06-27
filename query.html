@@ -2,39 +2,48 @@
     <div class="enerccio_sidequery_response"></div>
 
     <div class="enerccio_sidequery_controls">
-        <!-- Core Toggle Row -->
-        <div class="enerccio_sidequery_checkbox_group">
-            <div class="enerccio_sidequery_checkbox">
-                <label>Persona <input class="enerccio_sidequery_include_persona" type="checkbox"/></label>
-            </div>
-            <div class="enerccio_sidequery_checkbox">
-                <label>Characters <input class="enerccio_sidequery_include_characters" type="checkbox"></label>
-            </div>
-            <div class="enerccio_sidequery_checkbox">
-                <label>Worldinfo <input class="enerccio_sidequery_include_worldinfo" type="checkbox"></label>
-            </div>
-            <div class="enerccio_sidequery_checkbox">
-                <label>Scenario <input class="enerccio_sidequery_include_scenario" type="checkbox"></label>
+        <div class="enerccio_sidequery_top_control_row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; position: relative;">
+            <span class="enerccio_sidequery_query_token_count">Token Count: 0</span>
+
+            <div class="enerccio_sidequery_options_container" style="position: relative; display: inline-block;">
+                <button class="enerccio_sidequery_options_menu_trigger menu_button interactable" type="button" title="Configure context parameters..." style="padding: 4px 10px; font-size: 0.9em; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-sliders-h"></i> Options
+                </button>
+
+                <div class="enerccio_sidequery_options_menu_panel">
+                    <span style="font-size: 0.85em; font-weight: bold; color: var(--text-color); border-bottom: 1px solid var(--SmartThemeBorderColor); padding-bottom: 4px; display: block; margin-bottom: 4px;">Context Overrides</span>
+
+                    <div class="enerccio_sidequery_checkbox_group" style="display: flex; flex-direction: column; gap: 6px;">
+                        <div class="enerccio_sidequery_checkbox"><label style="display: flex; align-items: center; gap: 6px; margin: 0;"><input class="enerccio_sidequery_include_persona" type="checkbox"/> Persona</label></div>
+                        <div class="enerccio_sidequery_checkbox"><label style="display: flex; align-items: center; gap: 6px; margin: 0;"><input class="enerccio_sidequery_include_characters" type="checkbox"> Characters</label></div>
+                        <div class="enerccio_sidequery_checkbox"><label style="display: flex; align-items: center; gap: 6px; margin: 0;"><input class="enerccio_sidequery_include_worldinfo" type="checkbox"> Worldinfo</label></div>
+                        <div class="enerccio_sidequery_checkbox"><label style="display: flex; align-items: center; gap: 6px; margin: 0;"><input class="enerccio_sidequery_include_scenario" type="checkbox"> Scenario</label></div>
+                        <div class="enerccio_sidequery_checkbox"><label style="display: flex; align-items: center; gap: 6px; margin: 0;"><input class="enerccio_sidequery_macro_expand" type="checkbox"> Macroexpand</label></div>
+                    </div>
+
+                    <hr style="margin: 6px 0; border: 0; border-top: 1px solid var(--SmartThemeBorderColor);">
+
+                    <div style="display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px;">
+                        <label style="display: flex; align-items: center; gap: 4px; white-space: nowrap; margin: 0; font-size: 0.85em;">
+                            <input class="enerccio_sidequery_include_messages" type="checkbox"> Chat Logs:
+                        </label>
+                        <div style="display: flex; gap: 4px; align-items: center; justify-content: flex-end;">
+                            <input class="enerccio_sidequery_messages_count_from" type="number" value="5">
+                            <span style="font-size: 0.8em; opacity: 0.7;">to</span>
+                            <input class="enerccio_sidequery_messages_count_to" type="number" value="5">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; margin-top: 2px;">
+                        <span style="font-size: 0.85em;">WI Engine:</span>
+                        <select class="enerccio_sidequery_trigger_type" style="width: 100%; padding: 2px 4px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: var(--border-radius-small); font-size: 0.85em;">
+                            <option value="normal">Normal WI</option>
+                            <option value="sidequery">SideQuery WI</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div style="display: grid; grid-template-columns: auto auto auto 1fr auto; align-items: center; gap: 8px; margin: 8px 0; width: 100%;">
-            <label style="display: flex; align-items: center; gap: 4px; white-space: nowrap; margin: 0;">
-                Messages: <input class="enerccio_sidequery_include_messages" type="checkbox">
-            </label>
-
-            <input class="enerccio_sidequery_messages_count_from" type="number" value="5" style="width: 65px; text-align: center; padding: 4px 2px;">
-            <input class="enerccio_sidequery_messages_count_to" type="number" value="5" style="width: 65px; text-align: center; padding: 4px 2px;">
-
-            <div></div>
-
-            <select class="enerccio_sidequery_trigger_type" style="width: 100%; max-width: 110px; padding: 2px 4px; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border); border-radius: var(--border-radius-small); font-size: 0.95em; justify-self: end;">
-                <option value="normal">Normal WI</option>
-                <option value="sidequery">SideQuery WI</option>
-            </select>
-        </div>
-
-        <span class="enerccio_sidequery_query_token_count">Token Count: 0</span>
 
         <hr style="margin: 6px 0;">
 
@@ -48,7 +57,7 @@
             <button class="enerccio_sidequery_delete menu_button interactable" type="button" title="Delete" style="padding: 4px 8px; font-size: 0.85em; flex: 0 0 auto;"><i class="fas fa-trash"></i></button>
 
             <!-- Save As Popover -->
-            <div class="enerccio_sidequery_popover" style="display: none; position: absolute; bottom: 100%; right: 0; background: var(--SmartThemeBlurTintColor); border: 1px solid var(--SmartThemeBorderColor); border-radius: var(--border-radius-small); padding: 8px; box-shadow: 0 4px 12px var(--black70a); z-index: 6000; flex-direction: column; gap: 6px; width: 220px; box-sizing: border-box; margin-bottom: 4px;">
+            <div class="enerccio_sidequery_options_popover" style="display: none; position: absolute; top: 100%; right: 0; background: var(--SmartThemeBlurTintColor); border: 1px solid var(--SmartThemeBorderColor); border-radius: var(--border-radius-small); padding: 12px; box-shadow: 0 4px 12px var(--black70a); z-index: 6500; flex-direction: column; gap: 10px; width: 250px; box-sizing: border-box; margin-top: 4px;">
                 <span style="font-size: 0.85em; font-weight: bold; color: var(--text-color);">Save Query As:</span>
                 <input class="enerccio_sidequery_popover_input" type="text" placeholder="Prompt Name" style="width: 100%; padding: 4px; box-sizing: border-box; background: var(--input-bg); color: var(--text-color); border: 1px solid var(--input-border);" />
                 <div style="display: flex; gap: 4px; justify-content: flex-end;">

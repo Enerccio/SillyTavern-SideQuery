@@ -13,8 +13,9 @@ import {
 import {EXTENSION_NAME, EXTENSION_PATH, MODULE_NAME, VERSION} from './conf.js';
 import {getContext, renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
-import {getCharacterCardFields, getMaxPromptTokens, messageFormatting} from "/script.js";
+import {getCharacterCardFields, getMaxPromptTokens, messageFormatting, substituteParams} from "/script.js";
 import {getWorldInfoPrompt} from "/scripts/world-info.js";
+import {evaluateMacros} from "/scripts/macros.js";
 
 const TRIGGER_KEYWORD = 'SIDEQUERY_TRIGGER';
 
@@ -481,6 +482,9 @@ class SideQueryContainer {
             const wiMode = this.sideQuery.triggerType === 'sidequery' ? "SideQuery WI" : "Normal WI";
             activeContexts.push(`Worldinfo (${wiMode})`);
         }
+        if (this.sideQuery.macroExpand) {
+            activeContexts.push("Macroexpand");
+        }
         if (this.sideQuery.includeMessages) {
             activeContexts.push(`Messages ${this.sideQuery.messagesCount}-${this.sideQuery.messagesCountTo}`);
         }
@@ -674,8 +678,14 @@ class SideQueryContainer {
                 }
 
             if (message.included) {
+                let content = message.contents;
+                if (this.sideQuery.macroExpand) {
+                    if (message.from_user) {
+                        content = substituteParams(content);
+                    }
+                }
                 queries.push({
-                    content: message.contents,
+                    content: content,
                     role: message.from_user ? "user" : "assistant",
                 });
             }
@@ -703,6 +713,8 @@ class SideQuery {
         this.$includeCharacters = this.$root.find(`.${MODULE_NAME}_include_characters`);
         this.includeWorldinfo = false;
         this.$includeWorldinfo = this.$root.find(`.${MODULE_NAME}_include_worldinfo`);
+        this.macroExpand = true;
+        this.$macroExpand = this.$root.find(`.${MODULE_NAME}_macro_expand`);
         this.triggerType = 'normal';
         this.$triggerType = this.$root.find(`.${MODULE_NAME}_trigger_type`);
         this.includeScenario = false;
@@ -715,6 +727,8 @@ class SideQuery {
         this.$messagesCountTo = this.$root.find(`.${MODULE_NAME}_messages_count_to`);
         this.$userQuery = this.$root.find(`.${MODULE_NAME}_user_input`);
         this.$tokenCount = this.$root.find(`.${MODULE_NAME}_query_token_count`);
+        this.$optionsToggle = this.$root.find('.enerccio_sidequery_options_menu_trigger');
+        this.$optionsPopover = this.$root.find('.enerccio_sidequery_options_menu_panel');
         this.$undo = this.$root.find(`.${MODULE_NAME}_undo`);
         this.$send = this.$root.find(`.${MODULE_NAME}_send`);
         this.$generateAgain = this.$root.find(`.${MODULE_NAME}_generate_again`);
@@ -738,6 +752,46 @@ class SideQuery {
     async wire() {
         await this.updateButtonStates();
         this.updateSavedQueriesDropdown();
+
+        this.$optionsToggle.on('click', (e) => {
+            e.stopPropagation();
+
+            // 1. Close any other open configuration panels on the screen first
+            $('.enerccio_sidequery_options_menu_panel').not(this.$optionsPopover).hide();
+
+            const $panel = this.$optionsPopover;
+            const isVisible = $panel.is(':visible');
+
+            if (!isVisible) {
+                $panel.css({ display: 'flex', visibility: 'hidden' });
+
+                const containerTop = this.$root.offset().top;
+                const buttonTop = this.$optionsToggle.offset().top;
+                const spaceAbove = buttonTop - containerTop;
+                const panelHeight = $panel.outerHeight();
+
+                if (spaceAbove < panelHeight + 10) {
+                    $panel.addClass('drop-down-mode');
+                } else {
+                    $panel.removeClass('drop-down-mode');
+                }
+
+                $panel.css({ visibility: 'visible' });
+            } else {
+                $panel.hide();
+            }
+        });
+
+        $(document).on('click.options-popover-hide', (e) => {
+            if (!$(e.target).closest('.enerccio_sidequery_options_container').length) {
+                this.$optionsPopover.removeClass('show');
+            }
+        });
+
+        // Protect popover elements against bubbling closures
+        this.$optionsPopover.on('click mousedown mouseup keydown keyup', (e) => {
+            e.stopPropagation();
+        });
 
         this.$includePersona.on('change', async () => {
             if (this.loading) return;
@@ -784,6 +838,13 @@ class SideQuery {
         this.$messagesCount.on('change', async () => {
             if (this.loading) return;
             this.messagesCount = parseInt(this.$messagesCount.val(), 10) || 0;
+            await this.save();
+            await this.updateTokenCount();
+        });
+
+        this.$macroExpand.on('change', async () => {
+            if (this.loading) return;
+            this.macroExpand = !!this.$macroExpand.prop('checked');
             await this.save();
             await this.updateTokenCount();
         });
@@ -1016,6 +1077,7 @@ class SideQuery {
             this.includeScenario = this.saved.includeScenario;
             this.includeCharacters = this.saved.includeCharacters;
             this.includeWorldinfo = this.saved.includeWorldinfo;
+            this.macroExpand = this.saved.macroExpand ?? true;
             this.triggerType = this.saved.triggerType ?? 'normal';
             this.includeMessages = this.saved.includeMessages ?? false;
             this.messagesCount = this.saved.messagesCount ?? 0;
@@ -1030,6 +1092,7 @@ class SideQuery {
             this.$includeWorldinfo.prop('checked', this.includeWorldinfo);
             this.$triggerType.val(this.triggerType);
             this.$includeScenario.prop('checked', this.includeScenario);
+            this.$macroExpand.prop('checked', this.macroExpand);
             this.$includeMessages.prop('checked', this.includeMessages);
             this.$messagesCount.val(this.messagesCount);
             this.$messagesCountTo.val(this.messagesCountTo);
@@ -1142,6 +1205,7 @@ class SideQuery {
             includeScenario: this.includeScenario,
             includeCharacters: this.includeCharacters,
             includeWorldinfo: this.includeWorldinfo,
+            macroExpand: this.macroExpand,
             triggerType: this.triggerType,
             includeMessages: this.includeMessages,
             messagesCount: this.messagesCount,
@@ -1325,6 +1389,7 @@ class SideQueryTabs {
         this.activeTab = null;
         this.tabData = [];
         this.isRebuildingLayout = false;
+        this.isSwitchingTab = false;
         this.$addTabBtn.on('click', () => this.addNewTab());
     }
 
@@ -1626,6 +1691,7 @@ class SideQueryTabs {
             includeScenario: false,
             includeCharacters: false,
             includeWorldinfo: false,
+            macroExpand: true,
             includeMessages: false,
             messagesCount: 0,
             messagesCountTo: 5,
@@ -1681,31 +1747,48 @@ class SideQueryTabs {
     }
 
     async onTabClicked(index) {
-        if (index === null || this.activeTab === index) {
+        if (index === null || this.activeTab === index || this.isSwitchingTab) {
             return;
         }
 
-        // If there's an active tab, save its state before switching away.
-        if (this.activeTab !== null && this.tabs[this.activeTab]) {
-            await this.tabs[this.activeTab].save();
-        }
+        this.isSwitchingTab = true;
+        try {
+            // If there's an active tab, save its state before switching away.
+            if (this.activeTab !== null && this.tabs[this.activeTab]) {
+                await this.tabs[this.activeTab].save();
+            }
 
-        this.activeTab = index;
-        await this.updateTabs();
-        await this.showActiveTab();
-        this._scrollToActiveTab();
+            this.activeTab = index;
+            await this.updateTabs();
+            await this.showActiveTab();
+            this._scrollToActiveTab();
+        } finally {
+            this.isSwitchingTab = false;
+        }
     }
 
     async showActiveTab() {
+        const targetActiveTab = this.activeTab; // Snapshot the target index for this specific loop execution trace
         this.$contentPane.find(`#${MODULE_NAME}_tabs_tabcontent`).children().hide();
-        for (let t of this.tabs) {
-            if (this.activeTab !== null && t) {
-                if (this.tabs[this.activeTab] === t ) {
-                    await t.fill();
+
+        for (let i = 0; i < this.tabs.length; i++) {
+            // If the active tab index advanced under our feet due to another trigger, abort this stale loop immediately
+            if (this.activeTab !== targetActiveTab) return;
+
+            const t = this.tabs[i];
+            if (!t) continue;
+
+            if (i === targetActiveTab) {
+                await t.fill();
+                // Verify structural identity parameters haven't changed during the async yield point
+                if (this.activeTab === targetActiveTab) {
                     t.$root.show();
-                } else {
-                    await t.trash(); // Clear DOM elements for memory
-                    await t.load(this.tabData[this.tabs.indexOf(t)]); // Prepare for next load
+                }
+            } else {
+                await t.trash();
+                // Safe layout allocation preparation step
+                if (this.tabs[i] && this.tabData[i]) {
+                    await t.load(this.tabData[i]);
                 }
             }
         }

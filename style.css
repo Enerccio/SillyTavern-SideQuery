@@ -61,8 +61,8 @@
 
 .enerccio_sidequery_controls {
     display: block;
-    flex: 0 0 360px;
-    height: 360px;
+    flex: 0 0 300px;
+    height: 300px;
 }
 
 .enerccio_sidequery_checkbox_group {
@@ -337,4 +337,38 @@
     overflow: hidden;
     user-select: none !important;
     -webkit-user-select: none !important;
+}
+
+/* Fixed Drop-Up Menu Override */
+.enerccio_sidequery_options_menu_panel {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    width: 250px;
+    box-sizing: border-box;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--border-radius-small);
+    padding: 12px;
+    box-shadow: 0 4px 12px var(--black70a);
+
+    /* Crucial positioning overrides */
+    position: absolute;
+    bottom: 100%; /* Forces the menu to open upwards */
+    right: 0;
+    top: auto !important; /* Clears out any stale top positioning */
+    margin-bottom: 6px;   /* Clean spacing gap above the button */
+    z-index: 6500;        /* Stands safely on top of message logs */
+}
+
+.enerccio_sidequery_options_menu_panel.show {
+    display: flex;
+}
+
+/* Dynamic downward layout treatment when ceiling height is constricted */
+.enerccio_sidequery_options_menu_panel.drop-down-mode {
+    bottom: auto !important;
+    top: 100% !important;
+    margin-bottom: 0 !important;
+    margin-top: 4px !important;
 }
