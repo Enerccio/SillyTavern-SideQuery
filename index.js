@@ -1812,6 +1812,9 @@ class SideQueryTabs {
         });
         this.activeTab = this.tabData.length - 1;
         await this.updateTabs();
+        requestAnimationFrame(() => {
+            this._scrollToActiveTab();
+        });
         await this.save();
     }
 
