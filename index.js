@@ -763,20 +763,48 @@ class SideQuery {
             const isVisible = $panel.is(':visible');
 
             if (!isVisible) {
+                // Initialize block display context but keep hidden while calculating dimensions
                 $panel.css({ display: 'flex', visibility: 'hidden' });
 
-                const containerTop = this.$root.offset().top;
-                const buttonTop = this.$optionsToggle.offset().top;
-                const spaceAbove = buttonTop - containerTop;
+                const toggleOffset = this.$optionsToggle.offset();
+                const toggleHeight = this.$optionsToggle.outerHeight();
+                const toggleWidth = this.$optionsToggle.outerWidth();
                 const panelHeight = $panel.outerHeight();
+                const panelWidth = $panel.outerWidth();
 
-                if (spaceAbove < panelHeight + 10) {
-                    $panel.addClass('drop-down-mode');
-                } else {
+                // Compute exact viewport positions relative to window scrolling coordinates
+                const scrollTop = $(window).scrollTop();
+                const scrollLeft = $(window).scrollLeft();
+
+                const buttonTopViewport = toggleOffset.top - scrollTop;
+                const buttonLeftViewport = toggleOffset.left - scrollLeft;
+
+                const spaceAbove = buttonTopViewport;
+                const spaceBelow = $(window).height() - (buttonTopViewport + toggleHeight);
+
+                let topPosition;
+                let leftPosition = buttonLeftViewport + toggleWidth - panelWidth; // Flush align right edges
+
+                // Smart evaluation checklist tracking window estate bounds to flip layout direction
+                if (spaceAbove >= panelHeight + 10 || spaceAbove > spaceBelow) {
+                    topPosition = buttonTopViewport - panelHeight - 6; // Open Upwards
                     $panel.removeClass('drop-down-mode');
+                } else {
+                    topPosition = buttonTopViewport + toggleHeight + 4; // Open Downwards
+                    $panel.addClass('drop-down-mode');
                 }
 
-                $panel.css({ visibility: 'visible' });
+                // Viewport edge boundary safety rails to guarantee it never gets cut off by screen borders
+                if (leftPosition < 10) leftPosition = 10;
+                if (leftPosition + panelWidth > $(window).width() - 10) {
+                    leftPosition = $(window).width() - panelWidth - 10;
+                }
+
+                $panel.css({
+                    top: topPosition + 'px',
+                    left: leftPosition + 'px',
+                    visibility: 'visible'
+                });
             } else {
                 $panel.hide();
             }
@@ -784,7 +812,7 @@ class SideQuery {
 
         $(document).on('click.options-popover-hide', (e) => {
             if (!$(e.target).closest('.enerccio_sidequery_options_container').length) {
-                this.$optionsPopover.removeClass('show');
+                this.$optionsPopover.hide();
             }
         });
 
@@ -1385,12 +1413,99 @@ class SideQueryTabs {
         this.$tabdata = this.$root.find(`#${MODULE_NAME}_tabs_tabcontent`);
         this.$tabsContainer = this.$contentPane.find(`.${MODULE_NAME}_tabs`);
         this.$addTabBtn = this.$contentPane.find(`#${MODULE_NAME}_add_tab`);
+        this.$infoBtn = this.$contentPane.find(`#${MODULE_NAME}_info_btn`);
+        this.$infoPopover = this.$contentPane.find(`#${MODULE_NAME}_info_popover`);
+        this.currentInfoTab = 'pre'; // Track sub-view state: 'pre' or 'post'
+
         this.tabs = []
         this.activeTab = null;
         this.tabData = [];
         this.isRebuildingLayout = false;
         this.isSwitchingTab = false;
         this.$addTabBtn.on('click', () => this.addNewTab());
+
+        this._wireInfoPopover();
+    }
+
+    _wireInfoPopover() {
+        // Tab switching events inside the popover layout panel itself
+        this.$infoPopover.find('.enerccio_sidequery_info_tab').on('click', (e) => {
+            e.stopPropagation();
+            const targetTab = $(e.currentTarget).data('info-tab');
+            this.currentInfoTab = targetTab;
+
+            this.$infoPopover.find('.enerccio_sidequery_info_tab').removeClass('active');
+            $(e.currentTarget).addClass('active');
+
+            this._updateInfoPopoverContent();
+        });
+
+        // Toggle context logic for the primary information icon click
+        this.$infoBtn.on('click', (e) => {
+            e.stopPropagation();
+
+            // Close standard options dropdown if open to keep things clean
+            $('.enerccio_sidequery_options_menu_panel').hide();
+
+            const isVisible = this.$infoPopover.is(':visible');
+            if (!isVisible) {
+                this.$infoPopover.css({ display: 'flex', visibility: 'hidden' });
+
+                const btnOffset = this.$infoBtn.offset();
+                const btnWidth = this.$infoBtn.outerWidth();
+                const btnHeight = this.$infoBtn.outerHeight();
+                const panelWidth = this.$infoPopover.outerWidth();
+                const panelHeight = this.$infoPopover.outerHeight();
+
+                const scrollTop = $(window).scrollTop();
+                const scrollLeft = $(window).scrollLeft();
+
+                // Position flush immediately to the right edge of the info button frame
+                let leftPos = btnOffset.left + btnWidth + 6 - scrollLeft;
+                let topPos = btnOffset.top - scrollTop;
+
+                // Safety guardrails for edge-of-screen constraints
+                if (leftPos + panelWidth > $(window).width() - 10) {
+                    // Fallback: If right edge truncates workspace, flip open to the left side
+                    leftPos = btnOffset.left - panelWidth - 6 - scrollLeft;
+                }
+                if (topPos + panelHeight > $(window).height() - 10) {
+                    topPos = $(window).height() - panelHeight - 10;
+                }
+                if (topPos < 10) topPos = 10;
+
+                this.$infoPopover.css({
+                    left: leftPos + 'px',
+                    top: topPos + 'px',
+                    visibility: 'visible'
+                });
+
+                this._updateInfoPopoverContent();
+            } else {
+                this.$infoPopover.hide();
+            }
+        });
+
+        // Suppress layout bubbling closure loops when selecting text inside textareas
+        this.$infoPopover.on('click mousedown mouseup keydown keyup', (e) => {
+            e.stopPropagation();
+        });
+
+        // Click wrapper boundary hide routing
+        $(document).on('click.info-popover-hide', (e) => {
+            if (!$(e.target).closest('#enerccio_sidequery_info_btn').length) {
+                this.$infoPopover.hide();
+            }
+        });
+    }
+
+    // NEW: Updates text fields dynamically using configured setting definitions
+    _updateInfoPopoverContent() {
+        const prePrompt = getSettings('first_message', false, '');
+        const postPrompt = getSettings('before_last_message', false, '');
+
+        const targetString = this.currentInfoTab === 'pre' ? prePrompt : postPrompt;
+        this.$infoPopover.find('#enerccio_sidequery_info_textarea').val(targetString);
     }
 
     updateAllSavedQueriesDropdowns() {

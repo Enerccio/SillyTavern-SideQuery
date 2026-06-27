@@ -344,7 +344,7 @@
     display: none;
     flex-direction: column;
     gap: 10px;
-    width: 250px;
+    width: 300px;
     box-sizing: border-box;
     background: var(--SmartThemeBlurTintColor);
     border: 1px solid var(--SmartThemeBorderColor);
@@ -352,25 +352,23 @@
     padding: 12px;
     box-shadow: 0 4px 12px var(--black70a);
 
-    /* Crucial positioning overrides */
-    position: absolute;
-    bottom: 100%; /* Forces the menu to open upwards */
-    right: 0;
-    top: auto !important; /* Clears out any stale top positioning */
-    margin-bottom: 6px;   /* Clean spacing gap above the button */
-    z-index: 6500;        /* Stands safely on top of message logs */
+    /* CHANGE: Swapped to fixed to cleanly escape parent overflow: hidden elements */
+    position: fixed;
+    z-index: 6500; /* Stands safely on top of message logs */
+
+    /* Clear absolute layout bindings so JavaScript handles coordinates */
+    bottom: auto;
+    right: auto;
+    top: auto !important;
+    margin-bottom: 0;
 }
 
 .enerccio_sidequery_options_menu_panel.show {
     display: flex;
 }
 
-/* Dynamic downward layout treatment when ceiling height is constricted */
 .enerccio_sidequery_options_menu_panel.drop-down-mode {
-    bottom: auto !important;
-    top: 100% !important;
-    margin-bottom: 0 !important;
-    margin-top: 4px !important;
+
 }
 
 /* Settings Page Dedicated Popup Overlay Windows */
@@ -416,4 +414,72 @@
     border-bottom: 1px solid var(--SmartThemeBorderColor);
     padding-bottom: 6px;
     color: var(--text-color);
+}
+
+/* Prompt Context Preview Popover Layout Rules */
+.enerccio_sidequery_info_panel {
+    display: none;
+    flex-direction: column;
+    width: 290px;
+    height: 240px;
+    box-sizing: border-box;
+    background: var(--SmartThemeBlurTintColor);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--border-radius-small, 4px);
+    padding: 10px;
+    box-shadow: 0 4px 14px var(--black70a);
+
+    /* Avoid parent containment boundaries entirely */
+    position: fixed;
+    z-index: 7000;
+}
+
+.enerccio_sidequery_info_tabs_row {
+    display: flex;
+    border-bottom: 1px solid var(--SmartThemeBorderColor);
+    margin-bottom: 8px;
+    gap: 4px;
+}
+
+.enerccio_sidequery_info_tab {
+    padding: 4px 10px;
+    font-size: 0.8em;
+    cursor: pointer;
+    border-radius: var(--border-radius-small, 4px) var(--border-radius-small, 4px) 0 0;
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text-color);
+    opacity: 0.65;
+    transition: all 0.15s ease-in-out;
+}
+
+.enerccio_sidequery_info_tab:hover {
+    opacity: 1;
+    background: var(--SmartThemeBorderColor);
+}
+
+.enerccio_sidequery_info_tab.active {
+    opacity: 1;
+    background: var(--SmartThemeBorderColor);
+    font-weight: bold;
+}
+
+.enerccio_sidequery_info_body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+#enerccio_sidequery_info_textarea {
+    width: 100%;
+    height: 100%;
+    background: var(--black30a);
+    color: var(--text-color);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: var(--border-radius-small, 3px);
+    padding: 6px;
+    font-family: monospace;
+    font-size: 0.85em;
+    resize: none;
+    box-sizing: border-box;
+    outline: none;
 }
