@@ -1121,9 +1121,11 @@ class SideQuery {
             this.name = this.saved.name || "";
             this.isManuallyRenamed = this.saved.isManuallyRenamed || false;
             await this.container.fromJson(this.saved.chat);
-            this.bindGlobalOptions();
+            this.loading = false;
             this.loaded = true;
         }
+
+        this.bindGlobalOptions();
         this.updateSavedQueriesDropdown();
         await this.updateButtonStates();
         await this.updateTokenCount();
