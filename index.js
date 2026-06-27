@@ -6,7 +6,8 @@ import {
     initializeRequestMetadata,
     loadSettings,
     log,
-    setChatMetadata, setSettings,
+    setChatMetadata,
+    setSettings,
     toastDebounced,
     updateConnectionProfileDropdown
 } from './utils.js';
@@ -15,7 +16,6 @@ import {getContext, renderExtensionTemplateAsync} from "/scripts/extensions.js";
 import {event_types} from "/scripts/events.js";
 import {getCharacterCardFields, getMaxPromptTokens, messageFormatting, substituteParams} from "/script.js";
 import {getWorldInfoPrompt} from "/scripts/world-info.js";
-import {evaluateMacros} from "/scripts/macros.js";
 
 const TRIGGER_KEYWORD = 'SIDEQUERY_TRIGGER';
 
@@ -999,6 +999,7 @@ class SideQuery {
             }
 
             await this.updateButtonStates();
+            await this.updateTokenCount();
         });
 
         this.$generateAgain.on('click', async () => {
@@ -1006,6 +1007,7 @@ class SideQuery {
             this._scrollToBottom();
             await this.save();
             await this.updateButtonStates();
+            await this.updateTokenCount();
             await this.generateReply();
             await this.updateButtonStates();
         });
@@ -1260,6 +1262,7 @@ class SideQuery {
         await this.updateButtonStates();
         const profile = metadata.cId;
         const queryData = await this.gatherQueryData();
+        await this.updateTokenCount();
         let asyncGeneratorFunction = await context.ConnectionManagerRequestService.sendRequest(profile, queryData,
             profile.max_tokens, {stream: true, signal: this.abort.signal});
         const m = await this.container.insertAIMessage("");
@@ -1431,8 +1434,7 @@ class SideQueryTabs {
         // Tab switching events inside the popover layout panel itself
         this.$infoPopover.find('.enerccio_sidequery_info_tab').on('click', (e) => {
             e.stopPropagation();
-            const targetTab = $(e.currentTarget).data('info-tab');
-            this.currentInfoTab = targetTab;
+            this.currentInfoTab = $(e.currentTarget).data('info-tab');
 
             this.$infoPopover.find('.enerccio_sidequery_info_tab').removeClass('active');
             $(e.currentTarget).addClass('active');
