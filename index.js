@@ -486,7 +486,11 @@ class SideQueryContainer {
             activeContexts.push("Macroexpand");
         }
         if (this.sideQuery.includeMessages) {
-            activeContexts.push(`Messages ${this.sideQuery.messagesCount}-${this.sideQuery.messagesCountTo}`);
+            let logLabel = `Messages ${this.sideQuery.messagesCount}-${this.sideQuery.messagesCountTo}`;
+            if (this.sideQuery.includeActorNames) {
+                logLabel += " (with Names)";
+            }
+            activeContexts.push(logLabel);
         }
 
         const contextSummary = activeContexts.length > 0
@@ -600,26 +604,30 @@ class SideQueryContainer {
         if (this.sideQuery.includeMessages) {
             const count = this.sideQuery.messagesCount;
             const countTo = this.sideQuery.messagesCountTo;
-            const chatMessages = getContext().chat; // verify if SillyTavern.getContext() is needed
+            const chatMessages = getContext().chat;
 
             if (count <= countTo && count >= 0) {
-                // 1. Filter out the slice of messages we actually care about
                 const targetMessages = chatMessages.slice(count, countTo + 1);
 
-                // 2. Map them to an array of processing promises
                 const processingPromises = targetMessages.map(async (m) => {
                     if (!m) return "";
 
-                    return (await window.enerccio_compat?.messageProcessor(
+                    let msgText = (await window.enerccio_compat?.messageProcessor(
                         m.mes,
                         {
                             'role': m.is_user ? 'user' : (m.is_system ? 'system' : 'assistant'),
                             'content': m.mes
                         }
                     )) || m.mes;
+
+                    if (this.sideQuery.includeActorNames) {
+                        const speakerName = m.name || (m.is_user ? "User" : "AI");
+                        msgText = `${speakerName}: ${msgText}`;
+                    }
+
+                    return msgText;
                 });
 
-                // 3. Resolve all processing concurrently and join them cleanly
                 const resolvedMessages = await Promise.all(processingPromises);
                 chatMessagesData = resolvedMessages.filter(Boolean).join("\n\n") + "\n\n";
             }
@@ -714,6 +722,7 @@ class SideQuery {
         this.triggerType = 'normal';
         this.includeScenario = false;
         this.includeMessages = false;
+        this.includeActorNames = false;
         this.messagesCount = 5;
         this.messagesCountTo = 5;
 
@@ -744,10 +753,8 @@ class SideQuery {
     bindGlobalOptions() {
         if (!$globalOptionsPopover) return;
 
-        // 1. Clear all old event hooks left behind by previously viewed tabs
         $globalOptionsPopover.find('input, select').off('.tabContext');
 
-        // 2. Synchronize current input states to reflect this specific tab profile data fields
         $globalOptionsPopover.find('.enerccio_sidequery_include_persona').prop('checked', this.includePersona);
         $globalOptionsPopover.find('.enerccio_sidequery_include_characters').prop('checked', this.includeCharacters);
         $globalOptionsPopover.find('.enerccio_sidequery_include_worldinfo').prop('checked', this.includeWorldinfo);
@@ -755,10 +762,12 @@ class SideQuery {
         $globalOptionsPopover.find('.enerccio_sidequery_include_scenario').prop('checked', this.includeScenario);
         $globalOptionsPopover.find('.enerccio_sidequery_macro_expand').prop('checked', this.macroExpand);
         $globalOptionsPopover.find('.enerccio_sidequery_include_messages').prop('checked', this.includeMessages);
+        $globalOptionsPopover.find('.enerccio_sidequery_include_messages').prop('checked', this.includeMessages);
+        $globalOptionsPopover.find('.enerccio_sidequery_include_actor_names').prop('checked', this.includeActorNames); // ADD THIS LINE
+        $globalOptionsPopover.find('.enerccio_sidequery_messages_count_from').val(this.messagesCount);
         $globalOptionsPopover.find('.enerccio_sidequery_messages_count_from').val(this.messagesCount);
         $globalOptionsPopover.find('.enerccio_sidequery_messages_count_to').val(this.messagesCountTo);
 
-        // 3. Attach fresh event listeners namespaced to this active instance
         $globalOptionsPopover.find('.enerccio_sidequery_include_persona').on('change.tabContext', async (e) => {
             if (this.loading) return;
             this.includePersona = !!$(e.target).prop('checked');
@@ -801,6 +810,18 @@ class SideQuery {
             await this.save();
             await this.updateTokenCount();
         });
+        $globalOptionsPopover.find('.enerccio_sidequery_include_messages').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includeMessages = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
+        $globalOptionsPopover.find('.enerccio_sidequery_include_actor_names').on('change.tabContext', async (e) => {
+            if (this.loading) return;
+            this.includeActorNames = !!$(e.target).prop('checked');
+            await this.save();
+            await this.updateTokenCount();
+        });
         $globalOptionsPopover.find('.enerccio_sidequery_messages_count_from').on('change.tabContext', async (e) => {
             if (this.loading) return;
             this.messagesCount = parseInt($(e.target).val(), 10) || 0;
@@ -822,7 +843,6 @@ class SideQuery {
         this.$optionsToggle.on('click', (e) => {
             e.stopPropagation();
 
-            // FIX: Use e.currentTarget to always capture the live button reference
             const $button = $(e.currentTarget);
             const $panel = $globalOptionsPopover;
             const isVisible = $panel.is(':visible');
@@ -832,7 +852,6 @@ class SideQuery {
 
                 $panel.css({ display: 'flex', visibility: 'hidden' });
 
-                // FIX: Use getBoundingClientRect for bulletproof viewport tracking
                 const rect = $button[0].getBoundingClientRect();
                 const buttonTopViewport = rect.top;
                 const buttonLeftViewport = rect.left;
@@ -842,11 +861,9 @@ class SideQuery {
                 const panelHeight = $panel.outerHeight();
                 const panelWidth = $panel.outerWidth();
 
-                // Position panel horizontally to the right side of the button
                 let leftPosition = buttonLeftViewport + toggleWidth + 6;
                 let topPosition;
 
-                // Dynamic vertical clearance evaluation
                 if (buttonTopViewport + panelHeight <= $(window).height() - 10) {
                     topPosition = buttonTopViewport;
                     $panel.addClass('drop-down-mode');
@@ -855,7 +872,6 @@ class SideQuery {
                     $panel.removeClass('drop-down-mode');
                 }
 
-                // Screen Boundary Safety Rails
                 if (leftPosition + panelWidth > $(window).width() - 10) {
                     leftPosition = buttonLeftViewport - panelWidth - 6;
                 }
@@ -867,7 +883,6 @@ class SideQuery {
 
                 $panel.css({ top: '', left: '' });
 
-                // 2. FORCE the calculated coordinates into the DOM using inline !important overrides
                 $panel[0].style.setProperty('top', topPosition + 'px', 'important');
                 $panel[0].style.setProperty('left', leftPosition + 'px', 'important');
                 $panel[0].style.setProperty('display', 'flex', 'important');
@@ -885,7 +900,6 @@ class SideQuery {
             }
         });
 
-        // Intercept bubbling close triggers on menu items
         $globalOptionsPopover.off('click.prevent-bubble').on('click.prevent-bubble', (e) => {
             e.stopPropagation();
         });
@@ -895,7 +909,6 @@ class SideQuery {
         });
 
         this.$savedPrompts.on('change', () => {
-            // Clear any asterisks from all options first
             this.$savedPrompts.find('option').each((idx, el) => {
                 const val = $(el).val();
                 if (val) {
@@ -1116,6 +1129,7 @@ class SideQuery {
             this.macroExpand = this.saved.macroExpand ?? true;
             this.triggerType = this.saved.triggerType ?? 'normal';
             this.includeMessages = this.saved.includeMessages ?? false;
+            this.includeActorNames = this.saved.includeActorNames ?? false;
             this.messagesCount = this.saved.messagesCount ?? 0;
             this.messagesCountTo = this.saved.messagesCountTo ?? 5;
             this.name = this.saved.name || "";
@@ -1236,6 +1250,7 @@ class SideQuery {
             macroExpand: this.macroExpand,
             triggerType: this.triggerType,
             includeMessages: this.includeMessages,
+            includeActorNames: this.includeActorNames,
             messagesCount: this.messagesCount,
             messagesCountTo: this.messagesCountTo,
             chat: this.container.toJSON()
@@ -1798,18 +1813,23 @@ class SideQueryTabs {
         if (this.isGenerating())
             return;
 
+        const currentTab = (this.activeTab !== null && this.tabData[this.activeTab])
+            ? this.tabData[this.activeTab]
+            : null;
+
         this.tabData.push({
             name: `Tab ${this.tabData.length + 1}`,
             isManuallyRenamed: false,
-            scrollPosition: 0, // Initialize flat
-            includePersona: false,
-            includeScenario: false,
-            includeCharacters: false,
-            includeWorldinfo: false,
-            macroExpand: true,
-            includeMessages: false,
-            messagesCount: 0,
-            messagesCountTo: 5,
+            scrollPosition: 0,
+            includePersona: currentTab ? currentTab.includePersona : false,
+            includeScenario: currentTab ? currentTab.includeScenario : false,
+            includeCharacters: currentTab ? currentTab.includeCharacters : false,
+            includeWorldinfo: currentTab ? currentTab.includeWorldinfo : false,
+            macroExpand: currentTab ? (currentTab.macroExpand ?? true) : true,
+            triggerType: currentTab ? (currentTab.triggerType ?? 'normal') : 'normal',
+            includeMessages: currentTab ? (currentTab.includeMessages ?? false) : false,
+            messagesCount: currentTab ? (currentTab.messagesCount ?? 0) : 0,
+            messagesCountTo: currentTab ? (currentTab.messagesCountTo ?? 5) : 5,
             chat: { messages: [] }
         });
         this.activeTab = this.tabData.length - 1;
